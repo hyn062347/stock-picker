@@ -1,6 +1,6 @@
-import { db } from "@/lib/db";
-import bcrypt from "bcrypt";
-import { createSession } from "@/lib/session";
+import { db } from "@/app/lib/db"
+import bcrypt from "bcryptjs";
+import { createSession } from "@/app/lib/sessions";
 
 export async function POST(req) {
   try {
