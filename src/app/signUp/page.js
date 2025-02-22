@@ -1,19 +1,27 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import styles from "../page.module.css"
+import styles from "./page.module.css"
 
 export default function SignUpPage() {
-    const [formData, setFormData] = useState({ username: "", email: "", password: "" });
+    const [formData, setFormData] = useState({ username: "", email: "", password: "", passwordConfirm: "" });
     const [error, setError] = useState("");
+    const [flag, setFlag] = useState(0);
     const router = useRouter();
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-      };
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        if (name === "password" || name === "passwordConfirm") {
+            setFlag(formData.password !== value ? 1 : 0);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (flag !== 0) return;
+
         setError("");
 
         try {
@@ -26,40 +34,59 @@ export default function SignUpPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Something went wrong");
 
-            router.push("/signin"); // 회원가입 후 로그인 페이지로 이동 
+            router.push("/signin");
         } catch (err) {
             setError(err.message);
         }
     };
 
-    return(
-        <form onSubmit={handleSubmit} className={styles["searchContainer"]}>
-        <input
-            type="text"
-            value={formData.username}
-            name="username"
-            onChange={handleChange}
-            placeholder="Username"
-            className={styles["searchField"]}
-        />
-        <input
-            type="email"
-            value={formData.email}
-            name="email"
-            onChange={handleChange}
-            placeholder="Email"
-            className={styles["searchField"]}
-        />
-        <input
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            name="password"
-            className={styles["searchField"]}
-        />
-        <button type="submit" className={styles["searchButton"]}>
-            Confirm
-        </button>
-    </form>
+    return (
+        <div className={styles["signUpContainer"]}>
+            <h1 className={styles["signUpTitle"]}>Sign Up</h1>
+            <form onSubmit={handleSubmit} className={styles["signUpForm"]}>
+                <input
+                    type="text"
+                    value={formData.username}
+                    name="username"
+                    onChange={handleChange}
+                    placeholder="Username"
+                    className={styles["signUpField"]}
+                />
+                <input
+                    type="email"
+                    value={formData.email}
+                    name="email"
+                    onChange={handleChange}
+                    placeholder="Email"
+                    className={styles["signUpField"]}
+                />
+                <input
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    name="password"
+                    placeholder="Password"
+                    className={styles["signUpField"]}
+                />
+                <input
+                    type="password"
+                    value={formData.passwordConfirm}
+                    onChange={handleChange}
+                    name="passwordConfirm"
+                    placeholder="Password Confirm"
+                    className={`${styles["signUpField"]} ${flag ? styles["errorField"] : ""}`}
+                />
+                <div className={styles["buttonContainer"]}>
+                    <button type="button"
+                        className={styles["cancelButton"]}
+                        onClick={() => router.push("/")}>
+                        Cancel
+                    </button>
+                    <button type="submit" className={styles["signUpButton"]} disabled={flag !== 0}>
+                        Confirm
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 }

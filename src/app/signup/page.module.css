@@ -1,0 +1,61 @@
+.signUpForm{
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-end;
+    width: 30%;
+}
+
+.signUpField{
+    padding: 5px 15px;
+    border: none;
+    border-radius: 10px;
+    width: 100%;
+    box-shadow: 0 0 10px rgba(0, 106, 255, 0.2);
+    font-size: large;
+}
+
+.errorField{
+    padding: 5px 15px;
+    border: none;
+    border-radius: 10px;
+    width: 100%;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+    font-size: large;
+}
+
+.buttonContainer{
+    display: flex;
+    gap: 10px;
+}
+
+.signUpContainer{
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.signUpButton{
+    padding: 5px 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: rgb(0, 140, 255);
+    color: white;
+    font-size: large;
+    cursor: pointer;
+}
+
+.cancelButton{
+    padding: 5px 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: large;
+    cursor: pointer;
+}
+
+.signUpTitle{
+    color: rgb(0, 140, 255);
+}

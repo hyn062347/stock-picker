@@ -11,3 +11,11 @@
   align-items: center;
   gap: 20px;
 }
+
+.sign{
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  color: rgb(0, 140, 255);
+  text-decoration: underline;
+}
