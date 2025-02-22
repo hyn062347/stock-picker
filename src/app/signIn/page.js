@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import styles from "../page.module.css"
+import styles from "./page.module.css"
 
 export default function SignInPage() {
     const [formData, setFormData] = useState({email: "", password: "" });
@@ -33,25 +33,36 @@ export default function SignInPage() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className={styles["searchContainer"]}>
-            <input
-                type="email"
-                value={formData.email}
-                name="email"
-                onChange={handleChange}
-                placeholder="Email"
-                className={styles["searchField"]}
-            />
-            <input
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                name="password"
-                className={styles["searchField"]}
-            />
-            <button type="submit" className={styles["searchButton"]}>
-                Confirm
-            </button>
-        </form>
+        <div className={styles["signInContainer"]}>
+            <h1 className={styles["signInTitle"]}>Sign In</h1>
+            <form onSubmit={handleSubmit} className={styles["signInForm"]}>
+                <input
+                    type="email"
+                    value={formData.email}
+                    name="email"
+                    onChange={handleChange}
+                    placeholder="Email"
+                    className={styles["signInField"]}
+                />
+                <input
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    name="password"
+                    placeholder="Password"
+                    className={styles["signInField"]}
+                />
+                <div className={styles["buttonContainer"]}>
+                    <button type="button"
+                        className={styles["cancelButton"]}
+                        onClick={() => router.push("/")}>
+                        Cancel
+                    </button>
+                    <button type="submit" className={styles["signInButton"]}>
+                        Confirm
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 }
