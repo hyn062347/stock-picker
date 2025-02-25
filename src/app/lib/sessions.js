@@ -15,7 +15,8 @@ export async function createSession(userId) {
   ]);
 
   // 쿠키에 세션 ID 저장
-  cookies().set("sessionId", sessionId, {
+  const cookieStore = await cookies();
+  cookieStore.set("sessionId", sessionId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     path: "/",
@@ -26,7 +27,8 @@ export async function createSession(userId) {
 
 // 세션 확인
 export async function getSession() {
-  const sessionId = cookies().get("sessionId")?.value;
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("sessionId")?.value; // ✅ get()을 동기적으로 호출
   if (!sessionId) return null;
 
   const [rows] = await db.query("SELECT * FROM sessions WHERE id = ? AND expires > NOW()", [
@@ -38,9 +40,10 @@ export async function getSession() {
 
 // 로그아웃 (세션 삭제)
 export async function destroySession() {
-  const sessionId = cookies().get("sessionId")?.value;
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("sessionId")?.value;
   if (!sessionId) return;
 
   await db.query("DELETE FROM sessions WHERE id = ?", [sessionId]);
-  cookies().delete("sessionId");
+  cookieStore.delete("sessionId");
 }

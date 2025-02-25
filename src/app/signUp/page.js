@@ -40,6 +40,7 @@ export default function SignUpPage() {
         }
     };
 
+
     return (
         <div className={styles["signUpContainer"]}>
             <h1 className={styles["signUpTitle"]}>Sign Up</h1>

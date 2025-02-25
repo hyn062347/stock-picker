@@ -19,3 +19,19 @@
   color: rgb(0, 140, 255);
   text-decoration: underline;
 }
+
+.user{
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.outButton{
+  padding: 5px 10px;
+  color: white;
+  background-color: rgb(73, 73, 73);
+  border: none;
+  border-radius: 10px;
+  font-size: large;
+  cursor: pointer;
+}
