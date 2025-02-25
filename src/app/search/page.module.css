@@ -1,0 +1,9 @@
+.searchPage{
+    padding: 5%;
+}
+
+.charContainer{
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(0, 106, 255, 0.2);
+}
