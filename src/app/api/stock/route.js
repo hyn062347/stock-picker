@@ -40,7 +40,7 @@ export async function GET(req) {
     const formattedChartData = chartData.quotes.map((q, index) => ({
       time: new Date(q.date), // 날짜 변환
       price: q.close, // 종가 사용
-      volume: volumeData ? volumeData[index] || 0 : quote.volume || 0, // ✅ 거래량 추가
+      volume: volumeData ? volumeData[index] || 0 : q.volume || 0, // ✅ 거래량 추가
     }));
 
     return new Response(JSON.stringify({

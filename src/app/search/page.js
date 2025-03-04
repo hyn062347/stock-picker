@@ -19,6 +19,7 @@ export default function SearchResults() {
         const response = await fetch(`/api/stock?symbol=${query}`);
         const data = await response.json();
 
+        console.log(data);
         if (!data || data.error) {
           throw new Error(data.error || "데이터를 불러오지 못했습니다.");
         }
