@@ -1,4 +1,5 @@
 import { ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import styles from "./StockChart.module.css";
 
 export default function StockChart({ data }) {
   if (!data || data.length === 0) return <p>데이터 없음</p>;
@@ -24,16 +25,16 @@ export default function StockChart({ data }) {
     return (
       <div style={{ backgroundColor: "white", padding: "10px", border: "1px solid #ccc", borderRadius: "5px" }}>
         <p><strong>{new Date(payload[0].payload.time).toLocaleDateString("ko-KR")} {new Date(payload[0].payload.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })}</strong></p>
-        {priceData && <p>📈 주가: {priceData.value.toFixed(2)}</p>}
-        {movingAvgData && <p>📊 이동 평균: {movingAvgData.value.toFixed(2)}</p>}
-        {volumeData && <p>📊 거래량: {volumeData.value.toLocaleString()} 주</p>}
+        {priceData && <p>주가: {priceData.value.toFixed(2)}</p>}
+        {movingAvgData && <p>이동 평균: {movingAvgData.value.toFixed(2)}</p>}
+        {volumeData && <p>거래량: {volumeData.value.toLocaleString()} 주</p>}
       </div>
     );
   };
 
   return (
-    <div style={{ width: "100%", minWidth: "300px", height: "400px" }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div className={styles["ChartContainer"]}>
+      <ResponsiveContainer className={styles["chartcco"]}>
         <ComposedChart data={movingAverageData}>
           {/* X축 */}
           <XAxis
@@ -52,7 +53,7 @@ export default function StockChart({ data }) {
           <YAxis
             yAxisId="right"
             orientation="right"
-            domain={[0, "dataMax"]}
+            domain={["auto","auto"]}
           />
           <Tooltip content={renderTooltip} />
           <Legend />
