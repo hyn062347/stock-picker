@@ -16,27 +16,29 @@ export default async function Home() {
 
   return (
     <div className={styles["main"]}>
-      <h1 className={styles["title"]}>StockPicker</h1>
-      <SearchBar />
-      {username ? (
-        <div className={styles["user"]}>
-          <h2>Welcome, {username}!</h2>
-          <form action={signout}>
-            <button className={styles["outButton"]} type="submit">
-              Sign Out
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className={styles["sign"]}>
-          <Link href="/signup">
-            SignUp
-          </Link>
-          <Link href="/signin">
-            SignIn
-          </Link>
-        </div>
-      )}
+      <div className={styles["margintop"]}>
+        <h1 className={styles["title"]}>StockPicker</h1>
+        <SearchBar />
+        {username ? (
+          <div className={styles["user"]}>
+            <h2>Welcome, {username}!</h2>
+            <form action={signout}>
+              <button className={styles["outButton"]} type="submit">
+                Sign Out
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className={styles["sign"]}>
+            <Link href="/signup">
+              SignUp
+            </Link>
+            <Link href="/signin">
+              SignIn
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

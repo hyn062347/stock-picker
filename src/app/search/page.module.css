@@ -7,3 +7,11 @@
     border-radius: 20px;
     box-shadow: 0 0 10px rgba(0, 106, 255, 0.2);
 }
+
+.report{
+    white-space: pre-line;
+}
+
+.report ol{
+    list-style: none;
+}

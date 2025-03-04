@@ -25,7 +25,7 @@ export async function GET(req) {
     });
 
     // ✅ API 응답 데이터 구조 확인 (디버깅용)
-    console.log("Yahoo Finance API Response:", chartData);
+    // console.log("Yahoo Finance API Response:", chartData);
 
     // ✅ `quotes` 배열이 없을 경우 에러 처리
     if (!chartData || !chartData.quotes || chartData.quotes.length === 0) {
