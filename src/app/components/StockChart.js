@@ -45,28 +45,19 @@ export default function StockChart({ data }) {
           />
           {/* 왼쪽 Y축 (주가) */}
           <YAxis yAxisId="left" domain={["auto", "auto"]} />
+          <Line yAxisId="left" type="monotone" dataKey="price" stroke="#8884d8" strokeWidth={2} dot={false} name="주가" />
+          {/* ✅ 이동 평균선 */}
+          <Line yAxisId="left" type="monotone" dataKey="movingAverage" stroke="#FF5733" strokeWidth={2} dot={false} name="5일 이동 평균" />
           {/* 오른쪽 Y축 (거래량) */}
           <YAxis
             yAxisId="right"
             orientation="right"
             domain={[0, "dataMax"]}
-            tickFormatter={(value) => {
-              if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`; // 백만 단위
-              if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`; // 천 단위
-              return value;
-            }}
           />
           <Tooltip content={renderTooltip} />
           <Legend />
-
           {/* ✅ 거래량 막대 차트를 먼저 선언 */}
           <Bar yAxisId="right" dataKey="volume" fill="#82ca9d" name="거래량" />
-
-          {/* ✅ 주가 라인 그래프 */}
-          <Line yAxisId="left" type="monotone" dataKey="price" stroke="#8884d8" strokeWidth={2} dot={false} name="주가" />
-
-          {/* ✅ 이동 평균선 */}
-          <Line yAxisId="left" type="monotone" dataKey="movingAverage" stroke="#FF5733" strokeWidth={2} dot={false} name="5일 이동 평균" />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

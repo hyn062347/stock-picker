@@ -37,7 +37,7 @@ export default function SearchResults() {
     <div>
       <Header />
       <div className={styles["searchPage"]}>
-        <h1>{query}/</h1>
+      <h1>{query} / {stockData?.companyName || "Loading"}</h1>
         {stockData ? (
           <div>
             <p>현재 가격: {stockData.currentPrice}</p>

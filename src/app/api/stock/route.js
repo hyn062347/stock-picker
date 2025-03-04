@@ -9,6 +9,7 @@ export async function GET(req) {
   }
 
   try {
+
     // ✅ 주식 기본 정보 가져오기 (거래량 포함)
     const quote = await yahooFinance.quote(symbol);
 
@@ -43,6 +44,8 @@ export async function GET(req) {
     }));
 
     return new Response(JSON.stringify({
+      symbol: quote.symbol, // ✅ 주식 심볼
+      companyName: quote.longName || quote.shortName || "Unknown", // ✅ 회사 이름 추가
       currentPrice: quote.regularMarketPrice,
       openPrice: quote.regularMarketOpen,
       closePrice: quote.regularMarketPreviousClose,
