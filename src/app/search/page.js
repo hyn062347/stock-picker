@@ -73,7 +73,7 @@ export default function SearchResults() {
           recommendations.map((rec, index) => (
             <div key={index} className={styles["recommendation"]}>
               <p><strong>{rec.created_at}</strong></p>
-              <p>추천: <strong>{rec.recommendation}</strong></p>
+              <p><strong>{rec.recommendation}</strong></p>
               <div className={styles["report"]}><Markdown>{rec.report}</Markdown></div>
             </div>
           ))
