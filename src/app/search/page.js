@@ -78,7 +78,7 @@ export default function SearchResults() {
             </div>
           ))
         ) : (
-          <p>추천 정보 로딩 중...</p>
+          <p>추천 정보 분석중... 이 작업은 최대 5분 동안 지속 될 수 있습니다.</p>
         )}
       </div>
     </div>
