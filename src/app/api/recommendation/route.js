@@ -2,6 +2,7 @@ import mysql from "mysql2/promise";
 import { db } from "@/app/lib/db"
 import { exec } from "child_process"
 import { stdout } from "process";
+import { io } from "../../../../server/socket";
 
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
@@ -14,14 +15,12 @@ export async function GET(req) {
     try {
         // 2. stock_recommendation 테이블에서 추천 정보 가져오기
         const [recRows] = await db.execute(
-            "SELECT DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', '+09:00'), '%Y-%m-%d %H:%i:%s') AS created_at, recommendation, report FROM stock_recommendation WHERE symbol = ? ORDER BY created_at DESC;",
+            "SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at, recommendation, report FROM stock_recommendation WHERE symbol = ? ORDER BY created_at DESC;",
             [symbol]
         );
-
         let recommendation = recRows.length > 0 ? recRows : null;
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-
-        if(!recommendation || new Date(recommendation.created_at) < oneHourAgo){
+        if(!recommendation || new Date(recommendation[0].created_at) < oneHourAgo){
             console.log("Try.py Exec");
 
             exec(`python3 server/Try.py "${symbol}"`, (error, stdout, stderr) => {
@@ -29,6 +28,8 @@ export async function GET(req) {
                     console.error(`Try.py Error: ${stderr}`);
                 } else {
                     console.log(`Try.py: ${stdout}`);
+                    //Web Socket -> Client send Message
+                    io.emit("db_updated", {symbol});
                 }
             });
 

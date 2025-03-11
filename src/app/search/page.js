@@ -1,6 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import io from "socket.io-client"
 import Header from "../components/Header"
 import styles from "./page.module.css";
 import dynamic from "next/dynamic";
@@ -13,8 +14,11 @@ export default function SearchResults() {
   const query = searchParams.get("query");
   const [stockData, setStockData] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
+    let socket;
     async function fetchStockData() {
       if (!query) return;
       try {
@@ -35,6 +39,7 @@ export default function SearchResults() {
 
     async function fetchRecommendations() {
       if (!query) return;
+      setLoading(true);
       try {
         const response = await fetch(`./api/recommendation?symbol=${query}`);
         const data = await response.json();
@@ -44,13 +49,23 @@ export default function SearchResults() {
         console.error("Recommendation fetch error:", error);
         setRecommendations([]);
       }
+      setLoading(false);
     }
 
     fetchStockData();
     fetchRecommendations();
+
+    socket = io("http://localhost:4000");
+    socket.on("db_updated", (data) => {
+      console.log("새로운 추천 데이터 수신:", data);
+      if (data.symbol === query) {
+        fetchRecommendations(); // 새로운 데이터가 추가되었을 때 즉시 업데이트
+      }
+    });
+    return () => {
+      if (socket) socket.disconnect();
+    };
   }, [query]);
-
-
 
   return (
     <div>
@@ -78,7 +93,7 @@ export default function SearchResults() {
             </div>
           ))
         ) : (
-          <p>추천 정보 분석중... 이 작업은 최대 5분 동안 지속 될 수 있습니다.</p>
+          <p>추천정보 로딩중. 약 2분 정도 소요됩니다.</p>
         )}
       </div>
     </div>
