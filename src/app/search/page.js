@@ -15,6 +15,7 @@ export default function SearchResults() {
   const [stockData, setStockData] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [openReports, setOpenReports] = useState({});
 
   useEffect(() => {
     let socket;
@@ -66,6 +67,7 @@ export default function SearchResults() {
     };
   }, [query]);
 
+  
   const formattedRecommendations = useMemo(() => {
     return recommendations.map((rec, index) => ({
       key: index,
@@ -77,6 +79,14 @@ export default function SearchResults() {
                  rec.recommendation === "SELL" ? styles.sell : ""
     }));
   }, [recommendations]);
+
+  //각 index 마다 useState
+  const toggleReport = (index) => {
+    setOpenReports((prev) => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
 
   return (
     <div>
@@ -100,9 +110,13 @@ export default function SearchResults() {
             <div key={rec.key} className={styles["recommendation"]}>
               <div className={styles["recTitle"]}>
                 <p className={rec.className}>{rec.date} {rec.recommendation}</p> 
-                <button className={styles["viewButton"]}>hide</button>
+                <button className={styles["viewButton"]}  onClick={() => toggleReport(rec.key)}>{rec.isOpen ? "Hide" : "Open"}</button>
               </div>
-              <div className={styles["report"]}><p>{rec.report}</p></div>
+              {rec.isOpen && (
+                <div className={styles["report"]}>
+                  <Markdown>{rec.report}</Markdown>
+                </div>
+              )}
             </div>
           ))
         ) : (
