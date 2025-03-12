@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import io from "socket.io-client"
 import Header from "../components/Header"
 import styles from "./page.module.css";
@@ -15,7 +15,6 @@ export default function SearchResults() {
   const [stockData, setStockData] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
-
 
   useEffect(() => {
     let socket;
@@ -67,6 +66,18 @@ export default function SearchResults() {
     };
   }, [query]);
 
+  const formattedRecommendations = useMemo(() => {
+    return recommendations.map((rec, index) => ({
+      key: index,
+      date: rec.created_at,
+      recommendation: rec.recommendation,
+      report: rec.report,
+      className: rec.recommendation === "BUY" ? styles.buy :
+                 rec.recommendation === "HOLD" ? styles.hold :
+                 rec.recommendation === "SELL" ? styles.sell : ""
+    }));
+  }, [recommendations]);
+
   return (
     <div>
       <Header />
@@ -84,12 +95,14 @@ export default function SearchResults() {
         ) : (
           <p>로딩 중...</p>
         )}
-        {recommendations.length > 0 ? (
-          recommendations.map((rec, index) => (
-            <div key={index} className={styles["recommendation"]}>
-              <p><strong>{rec.created_at}</strong></p>
-              <p><strong>{rec.recommendation}</strong></p>
-              <div className={styles["report"]}><Markdown>{rec.report}</Markdown></div>
+        {formattedRecommendations.length > 0 ? (
+          formattedRecommendations.map((rec) => (
+            <div key={rec.key} className={styles["recommendation"]}>
+              <div className={styles["recTitle"]}>
+                <p className={rec.className}>{rec.date} {rec.recommendation}</p> 
+                <button className={styles["viewButton"]}>hide</button>
+              </div>
+              <div className={styles["report"]}><p>{rec.report}</p></div>
             </div>
           ))
         ) : (

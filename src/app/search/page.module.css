@@ -1,17 +1,68 @@
-.searchPage{
+.searchPage {
     padding: 5%;
 }
 
-.charContainer{
+.charContainer {
     border: none;
     border-radius: 20px;
-    box-shadow: 0 0 10px rgba(0, 106, 255, 0.2);
+    box-shadow: 0 0 10px #006aff33;
 }
 
-.report{
+.report {
     white-space: pre-line;
 }
 
-.report ol{
+.report ol {
     list-style: none;
+}
+
+.recommendation {
+    margin: 20px 0px;
+}
+
+.buy {
+    background-color: green;
+    border-radius: 10px;
+    color: white;
+    border: none;
+    padding: 5px;
+    font-weight: bold;
+    flex: 1;
+}
+
+.hold {
+    background-color: orange;
+    border-radius: 10px;
+    color: white;
+    border: none;
+    padding: 5px;
+    font-weight: bold;
+    flex: 1;
+}
+
+.sell {
+    background-color: red;
+    border-radius: 10px;
+    color: white;
+    border: none;
+    padding: 5px;
+    font-weight: bold;
+    flex: 1;
+}
+
+.recTitle{
+    gap: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: large;
+}
+
+.viewButton{
+    border-radius: 10px;
+    border: none;
+    padding: 0px 10px;
+    cursor: pointer;
+    font-size: large;
 }
