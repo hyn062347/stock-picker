@@ -68,6 +68,9 @@ export default function SearchResults() {
   }, [query]);
 
   const formattedRecommendations = useMemo(() => {
+    if (!recommendations || recommendations.length === 0) {
+      return [{ key: "loading", date: "", recommendation: "추천정보 로딩중. 약 2분 정도 소요됩니다.", report: "" }];
+    }
     return recommendations.map((rec, index) => ({
       key: index,
       date: rec.created_at,

@@ -25,6 +25,14 @@ export async function createSession(userId) {
   return sessionId;
 }
 
+// 세션 연장
+export async function refreshSession(sessionId) {
+  const expires = new Date();
+  expires.setHours(expires.getHours() + 1); // 1시간 연장
+
+  await db.query("UPDATE sessions SET expires = ? WHERE id = ?", [expires, sessionId]);
+}
+
 // 세션 확인
 export async function getSession() {
   const cookieStore = await cookies();
@@ -35,7 +43,14 @@ export async function getSession() {
     sessionId,
   ]);
 
-  return rows.length > 0 ? rows[0] : null;
+  if (rows.length > 0) {
+    // 사용자가 활동할 때마다 세션 연장
+    await refreshSession(sessionId);
+    return rows[0];
+  }
+
+
+  return null;
 }
 
 // 로그아웃 (세션 삭제)
