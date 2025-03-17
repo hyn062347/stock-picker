@@ -10,24 +10,27 @@
 
 .report {
     white-space: pre-line;
-    padding: 20px;
     border: none;
     border-radius: 15px;
     box-shadow: 0 0 10px #006aff33;
     opacity: 0;
-    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    max-height: 0;
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, padding 0.5s ease-out;
+    overflow: hidden;
 }
 
 .report.open {
     opacity: 1;
+    padding: 20px;
+    max-height: 1000px;
 }
 
 .report ol {
     list-style: none;
 }
 
-.recommendation {
-    margin: 20px 0px;
+.report li {
+    /* list-style: none; */
 }
 
 .buy {

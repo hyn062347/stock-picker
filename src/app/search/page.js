@@ -96,10 +96,10 @@ export default function SearchResults() {
         },
         body: JSON.stringify({ symbol: query }),
       });
-  
+
       const result = await response.json();
       if (result.error) throw new Error(result.error);
-  
+
       alert("즐겨찾기에 추가되었습니다!");
     } catch (error) {
       alert(error.message);
@@ -112,7 +112,7 @@ export default function SearchResults() {
       <div className={styles["searchPage"]}>
         <div className={styles["pageTitle"]}>
           <h1>{query} / {stockData?.companyName || "Loading"}</h1>
-          <button  onClick={handleAddToFavorites}>Add to Favoirtes</button>
+          <button onClick={handleAddToFavorites}>Add to Favoirtes</button>
         </div>
         {stockData ? (
           <div>
@@ -133,11 +133,9 @@ export default function SearchResults() {
                 <p className={rec.className}>{rec.date} {rec.recommendation}</p>
                 <button className={styles["viewButton"]} onClick={() => toggleReport(rec.key)}>{openReports[rec.key] ? "Hide" : "Open"}</button>
               </div>
-              {openReports[rec.key] && (
-                <div className={`${styles["report"]} ${openReports[rec.key] ? styles["open"] : ""}`}>
-                  <Markdown>{rec.report}</Markdown>
-                </div>
-              )}
+              <div className={`${styles["report"]} ${openReports[rec.key] ? styles["open"] : ""}`}>
+                <Markdown>{rec.report}</Markdown>
+              </div>
             </div>
           ))
         ) : (
