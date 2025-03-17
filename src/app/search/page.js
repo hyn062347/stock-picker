@@ -8,7 +8,6 @@ import dynamic from "next/dynamic";
 import Markdown from "react-markdown";
 
 const LineChart = dynamic(() => import("../components/StockChart"), { ssr: false });
-
 export default function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
@@ -16,9 +15,11 @@ export default function SearchResults() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openReports, setOpenReports] = useState({});
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    let socket;
+    // let socket;
+
     async function fetchStockData() {
       if (!query) return;
       try {
@@ -51,22 +52,20 @@ export default function SearchResults() {
       }
       setLoading(false);
     }
-
     fetchStockData();
     fetchRecommendations();
 
-    socket = io("http://localhost:4000");
-    socket.on("db_updated", (data) => {
-      console.log("새로운 추천 데이터 수신:", data);
-      if (data.symbol === query) {
-        fetchRecommendations(); // 새로운 데이터가 추가되었을 때 즉시 업데이트
-      }
-    });
-    return () => {
-      if (socket) socket.disconnect();
-    };
+    // socket = io("http://localhost:4000");
+    // socket.on("db_updated", (data) => {
+    //   console.log("새로운 추천 데이터 수신:", data);
+    //   if (data.symbol === query) {
+    //     fetchRecommendations(); // 새로운 데이터가 추가되었을 때 즉시 업데이트
+    //   }
+    // });
+    // return () => {
+    //   if (socket) socket.disconnect();
+    // };
   }, [query]);
-
 
   const formattedRecommendations = useMemo(() => {
     return recommendations.map((rec, index) => ({
@@ -88,11 +87,33 @@ export default function SearchResults() {
     }));
   };
 
+  const handleAddToFavorites = async () => {
+    try {
+      const response = await fetch("/api/favorite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ symbol: query }),
+      });
+  
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+  
+      alert("즐겨찾기에 추가되었습니다!");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   return (
     <div>
       <Header />
       <div className={styles["searchPage"]}>
-        <h1>{query} / {stockData?.companyName || "Loading"}</h1>
+        <div className={styles["pageTitle"]}>
+          <h1>{query} / {stockData?.companyName || "Loading"}</h1>
+          <button  onClick={handleAddToFavorites}>Add to Favoirtes</button>
+        </div>
         {stockData ? (
           <div>
             <p>현재 가격: {stockData.currentPrice}</p>

@@ -3,7 +3,7 @@ import { getSession } from "@/app/lib/sessions";
 
 export async function GET() {
     try {
-      const session = await getSession(); // ✅ 수정된 getSession()을 호출
+      const session = await getSession();
       if (!session) {
         return new Response(JSON.stringify({ user: null }), { status: 200 });
       }

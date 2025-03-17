@@ -4,7 +4,7 @@ import styles from "./StockChart.module.css";
 export default function StockChart({ data }) {
   if (!data || data.length === 0) return <p>데이터 없음</p>;
 
-  console.log(data);
+  // console.log(data);
   // ✅ 이동 평균(SMA) 계산 (5일 이동 평균)
   const movingAverageData = data.map((item, index, arr) => {
     const range = arr.slice(Math.max(0, index - 4), index + 1); // 최근 5개 데이터
