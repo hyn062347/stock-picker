@@ -133,8 +133,8 @@ export default function SearchResults() {
                 <p className={rec.className}>{rec.date} {rec.recommendation}</p>
                 <button className={styles["viewButton"]} onClick={() => toggleReport(rec.key)}>{openReports[rec.key] ? "Hide" : "Open"}</button>
               </div>
-              {openReports[rec.key] && (  // 이 부분을 수정
-                <div className={styles["report"]}>
+              {openReports[rec.key] && (
+                <div className={`${styles["report"]} ${openReports[rec.key] ? styles["open"] : ""}`}>
                   <Markdown>{rec.report}</Markdown>
                 </div>
               )}
