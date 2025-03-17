@@ -40,3 +40,13 @@ a {
     color-scheme: dark;
   }
 }
+
+/* 전체 페이지 스크롤 가능하지만, 스크롤바 숨김 */
+html, body {
+  overflow-y: auto; /* 세로 스크롤 가능하게 설정 */
+  scrollbar-width: none; /* Firefox에서 스크롤바 숨김 */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari에서 스크롤바 숨김 */
+}

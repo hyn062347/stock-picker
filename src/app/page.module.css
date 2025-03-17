@@ -31,6 +31,9 @@
   display: flex;
   flex-direction: row;
   gap: 10px;
+  color: white;
+  justify-content: center;
+  align-items: center;
 }
 
 .outButton{

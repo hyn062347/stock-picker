@@ -27,6 +27,9 @@ export default async function Home() {
                 Sign Out
               </button>
             </form>
+            <div className={styles["Favorites"]}>
+              <h2>Favorite Stocks</h2>
+            </div>
           </div>
         ) : (
           <div className={styles["sign"]}>

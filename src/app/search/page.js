@@ -1,8 +1,8 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import io from "socket.io-client"
-import Header from "../components/Header"
+import io from "socket.io-client";
+import Header from "../components/Header";
 import styles from "./page.module.css";
 import dynamic from "next/dynamic";
 import Markdown from "react-markdown";
@@ -67,7 +67,7 @@ export default function SearchResults() {
     };
   }, [query]);
 
-  
+
   const formattedRecommendations = useMemo(() => {
     return recommendations.map((rec, index) => ({
       key: index,
@@ -75,8 +75,8 @@ export default function SearchResults() {
       recommendation: rec.recommendation,
       report: rec.report,
       className: rec.recommendation === "BUY" ? styles.buy :
-                 rec.recommendation === "HOLD" ? styles.hold :
-                 rec.recommendation === "SELL" ? styles.sell : ""
+        rec.recommendation === "HOLD" ? styles.hold :
+          rec.recommendation === "SELL" ? styles.sell : ""
     }));
   }, [recommendations]);
 
@@ -84,7 +84,7 @@ export default function SearchResults() {
   const toggleReport = (index) => {
     setOpenReports((prev) => ({
       ...prev,
-      [index]: !prev[index]
+      [index]: !prev[index],
     }));
   };
 
@@ -109,10 +109,10 @@ export default function SearchResults() {
           formattedRecommendations.map((rec) => (
             <div key={rec.key} className={styles["recommendation"]}>
               <div className={styles["recTitle"]}>
-                <p className={rec.className}>{rec.date} {rec.recommendation}</p> 
-                <button className={styles["viewButton"]}  onClick={() => toggleReport(rec.key)}>{rec.isOpen ? "Hide" : "Open"}</button>
+                <p className={rec.className}>{rec.date} {rec.recommendation}</p>
+                <button className={styles["viewButton"]} onClick={() => toggleReport(rec.key)}>{openReports[rec.key] ? "Hide" : "Open"}</button>
               </div>
-              {rec.isOpen && (
+              {openReports[rec.key] && (  // 이 부분을 수정
                 <div className={styles["report"]}>
                   <Markdown>{rec.report}</Markdown>
                 </div>

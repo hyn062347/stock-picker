@@ -20,8 +20,10 @@ export async function GET(req) {
         );
         let recommendation = recRows.length > 0 ? recRows : null;
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const oneDayAgo = new Date(Date.now() - 60 * 60 * 1000 * 24);
         // if(!recommendation || new Date(recommendation[0].created_at) < oneHourAgo){
-        if(!recommendation){
+        // if(!recommendation){
+        if(!recommendation || new Date(recommendation[0].created_at) < oneDayAgo){
             console.log("Try.py Exec");
 
             exec(`python3 server/Try.py "${symbol}"`, (error, stdout, stderr) => {
