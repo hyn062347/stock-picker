@@ -1,4 +1,4 @@
-import { db } from "@/app/lib/db";
+import pool from "@/app/lib/db";
 import { getSession } from "@/app/lib/sessions";
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
         return new Response(JSON.stringify({ user: null }), { status: 200 });
       }
   
-      const [rows] = await db.query("SELECT username FROM users WHERE id = ?", [session.user_id]);
+      const [rows] = await pool.query("SELECT username FROM users WHERE id = ?", [session.user_id]);
       if (rows.length === 0) {
         return new Response(JSON.stringify({ user: null }), { status: 200 });
       }

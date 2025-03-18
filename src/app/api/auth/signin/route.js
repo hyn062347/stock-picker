@@ -1,4 +1,4 @@
-import { db } from "@/app/lib/db"
+import pool from "@/app/lib/db"
 import bcrypt from "bcryptjs";
 import { createSession } from "@/app/lib/sessions";
 
@@ -6,7 +6,7 @@ export async function POST(req) {
   try {
     const { email, password } = await req.json();
 
-    const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "User not found" }), { status: 401 });
     }

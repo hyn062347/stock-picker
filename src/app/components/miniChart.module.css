@@ -1,0 +1,17 @@
+.ChartContainer{
+    width: 300px;
+    height: 300px;
+    box-shadow: 0 0 10px rgba(0, 106, 255, 0.2);
+    border: none;
+    border-radius: 30px;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+.tooltip{
+    background-color: rgba(0, 0, 0, 0.823);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+}

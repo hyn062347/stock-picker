@@ -1,4 +1,4 @@
-import { db } from "@/app/lib/db";
+import pool from "@/app/lib/db";
 import { getSession } from "@/app/lib/sessions";
 
 export async function POST(req) {
@@ -17,7 +17,7 @@ export async function POST(req) {
     }
 
     // 중복된 즐겨찾기 방지
-    const [existing] = await db.query("SELECT * FROM favorite WHERE user_id = ? AND symbol = ?", [
+    const [existing] = await pool.query("SELECT * FROM favorite WHERE user_id = ? AND symbol = ?", [
       userId,
       symbol,
     ]);
@@ -27,7 +27,7 @@ export async function POST(req) {
     }
 
     // 즐겨찾기 추가
-    await db.query("INSERT INTO favorite (user_id, symbol) VALUES (?, ?)", [userId, symbol]);
+    await pool.query("INSERT INTO favorite (user_id, symbol) VALUES (?, ?)", [userId, symbol]);
 
     return new Response(JSON.stringify({ message: "즐겨찾기에 추가되었습니다!" }), { status: 201 });
   } catch (error) {
@@ -44,8 +44,7 @@ export async function GET(req) {
     }
 
     const userId = session.user_id;
-    const [favorites] = await db.query("SELECT symbol FROM favorite WHERE user_id = ?", [userId]);
-
+    const [favorites] = await pool.query("SELECT symbol FROM favorite WHERE user_id = ?", [userId]);
     return new Response(JSON.stringify(favorites), { status: 200 });
   } catch (error) {
     console.error("즐겨찾기 조회 오류:", error);

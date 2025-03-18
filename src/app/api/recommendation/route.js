@@ -1,5 +1,5 @@
 import mysql from "mysql2/promise";
-import { db } from "@/app/lib/db"
+import pool from "@/app/lib/db"
 import { exec } from "child_process"
 import { stdout } from "process";
 import { io } from "../../../../server/socket";
@@ -14,7 +14,7 @@ export async function GET(req) {
 
     try {
         // 2. stock_recommendation 테이블에서 추천 정보 가져오기
-        const [recRows] = await db.execute(
+        const [recRows] = await pool.execute(
             "SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at, recommendation, report FROM stock_recommendation WHERE symbol = ? ORDER BY created_at DESC;",
             [symbol]
         );
@@ -30,7 +30,7 @@ export async function GET(req) {
                     console.error(`Try.py Error: ${stderr}`);
                 } else {
                     console.log(`Try.py 실행 결과: ${stdout}`);
-                    io.emit("db_updated", { symbol });
+                    io.emit("pool_updated", { symbol });
                 }
             });
             return Response.json([]); // 빈 배열 반환하여 오류 방지
@@ -43,7 +43,7 @@ export async function GET(req) {
                     console.error(`Try.py Error: ${stderr}`);
                 } else {
                     console.log(`Try.py 실행 결과: ${stdout}`);
-                    io.emit("db_updated", { symbol });
+                    io.emit("pool_updated", { symbol });
                 }
             });
         }

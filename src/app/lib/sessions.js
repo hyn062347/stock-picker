@@ -1,4 +1,4 @@
-import { db } from "./db";
+import pool from "../lib/db";
 import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 
@@ -8,7 +8,7 @@ export async function createSession(userId) {
   const expires = new Date();
   expires.setHours(expires.getHours() + 1); // 1시간 후 만료
 
-  await db.query("INSERT INTO sessions (id, user_id, expires) VALUES (?, ?, ?)", [
+  await pool.query("INSERT INTO sessions (id, user_id, expires) VALUES (?, ?, ?)", [
     sessionId,
     userId,
     expires,
@@ -30,7 +30,7 @@ export async function refreshSession(sessionId) {
   const expires = new Date();
   expires.setHours(expires.getHours() + 1); // 1시간 연장
 
-  await db.query("UPDATE sessions SET expires = ? WHERE id = ?", [expires, sessionId]);
+  await pool.query("UPDATE sessions SET expires = ? WHERE id = ?", [expires, sessionId]);
 }
 
 // 세션 확인
@@ -39,7 +39,7 @@ export async function getSession() {
   const sessionId = cookieStore.get("sessionId")?.value; // ✅ get()을 동기적으로 호출
   if (!sessionId) return null;
 
-  const [rows] = await db.query("SELECT * FROM sessions WHERE id = ? AND expires > NOW()", [
+  const [rows] = await pool.query("SELECT * FROM sessions WHERE id = ? AND expires > NOW()", [
     sessionId,
   ]);
 
@@ -59,6 +59,6 @@ export async function destroySession() {
   const sessionId = cookieStore.get("sessionId")?.value;
   if (!sessionId) return;
 
-  await db.query("DELETE FROM sessions WHERE id = ?", [sessionId]);
+  await pool.query("DELETE FROM sessions WHERE id = ?", [sessionId]);
   cookieStore.delete("sessionId");
 }

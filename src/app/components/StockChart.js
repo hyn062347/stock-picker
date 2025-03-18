@@ -28,7 +28,7 @@ export default function StockChart({ data }) {
     const volumeData = payload.find((p) => p.dataKey === "volume");
 
     return (
-      <div style={{ backgroundColor: "white", padding: "10px", border: "1px solid #ccc", borderRadius: "5px" }}>
+      <div style={{ backgroundColor: "black", padding: "10px", color: "white", border: "none", borderRadius: "5px" }}>
         <p><strong>{new Date(payload[0].payload.time).toLocaleDateString("ko-KR")} {new Date(payload[0].payload.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })}</strong></p>
         {priceData && <p>주가: {priceData.value.toFixed(2)}</p>}
         {movingAvgData && <p>이동 평균: {movingAvgData.value.toFixed(2)}</p>}

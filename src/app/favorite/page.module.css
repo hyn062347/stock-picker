@@ -1,0 +1,24 @@
+.stockList{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.stockItem{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.ContentContainer{
+    padding: 40px;
+}
+
+.overflow{
+    overflow: hidden;
+}
+
+.title{
+    margin-bottom: 10px;
+}
