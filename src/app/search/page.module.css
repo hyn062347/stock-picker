@@ -97,3 +97,9 @@
     box-shadow: 0 0 10px rgba(49, 49, 49, 0.2);
     margin: 20px 0;
 }
+
+.buttonContainer{
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}

@@ -26,7 +26,7 @@ export default function SearchResults() {
         const response = await fetch(`/api/stock?symbol=${query}`);
         const data = await response.json();
 
-        console.log(data);
+        // console.log(data);
         if (!data || data.error) {
           throw new Error(data.error || "데이터를 불러오지 못했습니다.");
         }
@@ -35,7 +35,7 @@ export default function SearchResults() {
       } catch (error) {
         console.error("Stock data fetch error:", error);
         setStockData(null);
-      } finally{
+      } finally {
         setLoading(false);
       }
     }
@@ -111,13 +111,35 @@ export default function SearchResults() {
     }
   };
 
+  const handleRunTry = async () => {
+    try {
+      const response = await fetch("/api/run-try", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ symbol: query }),
+      });
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+
+      alert("Try.py 실행 요청 완료!");
+    } catch (error) {
+      alert("실행 오류: " + error.message);
+    }
+  };
+
   return (
     <div>
       <Header />
       <div className={styles["searchPage"]}>
         <div className={styles["pageTitle"]}>
           <h1>{query} / {stockData?.companyName || "Loading"}</h1>
-          <button onClick={handleAddToFavorites}>Add to Favoirtes</button>
+          <div className={styles["buttonContainer"]}>
+            <button onClick={handleAddToFavorites}>Add to Favoirtes</button>
+            <button onClick={handleRunTry}>Force Update</button>
+          </div>
         </div>
         {stockData ? (
           <div>
