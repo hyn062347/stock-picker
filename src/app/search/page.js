@@ -6,14 +6,14 @@ import Header from "../components/Header";
 import styles from "./page.module.css";
 import dynamic from "next/dynamic";
 import Markdown from "react-markdown";
+import StockChart from "../components/StockChart";
 
-const LineChart = dynamic(() => import("../components/StockChart"), { ssr: false });
 export default function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
   const [stockData, setStockData] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [openReports, setOpenReports] = useState({});
   const [user, setUser] = useState(null);
 
@@ -35,6 +35,8 @@ export default function SearchResults() {
       } catch (error) {
         console.error("Stock data fetch error:", error);
         setStockData(null);
+      } finally{
+        setLoading(false);
       }
     }
 
@@ -120,14 +122,19 @@ export default function SearchResults() {
         {stockData ? (
           <div>
             <p>현재 가격: {stockData.currentPrice}</p>
-            <p>오늘 시작가: {stockData.openPrice}</p>
-            <p>오늘 종가: {stockData.closePrice}</p>
+            <p>시작가: {stockData.openPrice}</p>
+            <p>종가: {stockData.closePrice}</p>
             <div className={styles["chartContainer"]}>
-              <LineChart data={stockData.chartData} />
+              <StockChart data={stockData.chartData} />
             </div>
           </div>
         ) : (
-          <p>로딩 중...</p>
+          <div>
+            <p>현재 가격: 로딩중...</p>
+            <p>시작가: 로딩중...</p>
+            <p>종가: 로딩중...</p>
+            <div className={styles["loadingPlaceholder"]}></div>
+          </div>
         )}
         {formattedRecommendations.length > 0 ? (
           formattedRecommendations.map((rec) => (

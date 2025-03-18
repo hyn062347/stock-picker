@@ -1,7 +1,10 @@
 .stockList{
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    margin: 0 auto;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+    justify-content: center;
+    justify-items: center;
 }
 
 .stockItem{
@@ -21,4 +24,11 @@
 
 .title{
     margin-bottom: 10px;
+}
+
+.loadingPlaceholder{
+    width: 300px;
+    height: 300px;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(49, 49, 49, 0.2);
 }

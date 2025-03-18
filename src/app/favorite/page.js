@@ -60,8 +60,14 @@ export default function FavoriteStocks() {
               style={{ cursor: "pointer" }} // ✅ 마우스 커서를 손 모양으로 변경
             >
               <h2 className={styles["overflow"]}>{stock.symbol}</h2>
-              <p>{truncateName(stockData[stock.symbol]?.companyName || "Unknown", 35)}</p>
-              {stockData[stock.symbol] ? <MiniChart data={stockData[stock.symbol]?.chartData || []} /> : <p>로딩 중...</p>}
+              <p>{truncateName(stockData[stock.symbol]?.companyName || "Loading...", 35)}</p>
+              {stockData[stock.symbol] ? (
+                <MiniChart data={stockData[stock.symbol]?.chartData || []} />
+              ) : (
+                <div>
+                  <div className={styles["loadingPlaceholder"]}></div>
+                </div>
+              )}
             </div>
           ))}
         </div>
