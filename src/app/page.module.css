@@ -29,7 +29,7 @@
 
 .user{
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 10px;
   color: white;
   justify-content: center;
@@ -48,4 +48,11 @@
 
 .margintop{
   margin-top: 20%;
+}
+
+.flexrow{
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
 }

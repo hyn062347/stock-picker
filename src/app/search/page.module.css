@@ -15,7 +15,8 @@
     box-shadow: 0 0 10px #006aff33;
     opacity: 0;
     max-height: 0;
-    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, padding 0.5s ease-out;
+    margin-bottom: 0;
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, padding 0.5s ease-out, margin-bottom 0.5s ease-in-out;
     overflow: hidden;
 }
 
@@ -23,6 +24,7 @@
     opacity: 1;
     padding: 20px;
     max-height: 1000px;
+    margin-bottom: 10px;
 }
 
 .report ol {

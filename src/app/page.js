@@ -21,14 +21,18 @@ export default async function Home() {
         <SearchBar />
         {username ? (
           <div className={styles["user"]}>
-            <h2>Welcome, {username}!</h2>
-            <form action={signout}>
-              <button className={styles["outButton"]} type="submit">
-                Sign Out
-              </button>
-            </form>
+            <div className={styles["flexrow"]}>
+              <h2>Welcome, {username}!</h2>
+              <form action={signout}>
+                <button className={styles["outButton"]} type="submit">
+                  Sign Out
+                </button>
+              </form>
+            </div>
             <div className={styles["Favorites"]}>
-              <h2>Favorite Stocks</h2>
+              <Link href="/favorite">
+                <h2>Favorite Stocks</h2>
+              </Link>
             </div>
           </div>
         ) : (

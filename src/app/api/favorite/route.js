@@ -35,3 +35,21 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: "서버 오류 발생" }), { status: 500 });
   }
 }
+
+export async function GET(req) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401 });
+    }
+
+    const userId = session.user_id;
+    const [favorites] = await db.query("SELECT symbol FROM favorite WHERE user_id = ?", [userId]);
+
+    return new Response(JSON.stringify(favorites), { status: 200 });
+  } catch (error) {
+    console.error("즐겨찾기 조회 오류:", error);
+
+    return new Response(JSON.stringify({ error: "서버 오류 발생" }), { status: 500 });
+  }
+}

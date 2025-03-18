@@ -33,8 +33,7 @@ export async function GET(req) {
                     io.emit("db_updated", { symbol });
                 }
             });
-
-            return new Response(JSON.stringify({ message: "추천 데이터를 생성 중입니다. 잠시 후 다시 시도해주세요." }), { status: 202 });
+            return Response.json([]); // 빈 배열 반환하여 오류 방지
         } 
         else if (new Date(recommendation[0].created_at) < oneDayAgo) {
             // 데이터가 오래된 경우, 기존 데이터를 반환하면서 Try.py 실행
