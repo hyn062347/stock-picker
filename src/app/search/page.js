@@ -147,7 +147,7 @@ export default function SearchResults() {
             <p>시작가: {stockData.openPrice}</p>
             <p>종가: {stockData.closePrice}</p>
             <div className={styles["chartContainer"]}>
-              <StockChart data={stockData.chartData} />
+              <StockChart data={stockData.chartData} recommendations={formattedRecommendations} />
             </div>
           </div>
         ) : (
