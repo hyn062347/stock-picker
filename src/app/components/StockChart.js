@@ -53,7 +53,9 @@ export default function StockChart({ data }) {
             dataKey="time"
             tickFormatter={(time) => {
               if (!(time instanceof Date)) time = new Date(time);
-              return time.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
+              const month = (time.getMonth() + 1).toString().padStart(2, "0"); // 월 (01~12)
+              const day = time.getDate().toString().padStart(2, "0"); // 일 (01~31)
+              return `${month}/${day}`; // MM-DD 형식으로 반환
             }}
           />
           <YAxis

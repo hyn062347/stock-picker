@@ -21,6 +21,7 @@ export async function GET(req) {
         let recommendation = recRows.length > 0 ? recRows : null;
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
         const oneDayAgo = new Date(Date.now() - 60 * 60 * 1000 * 24);
+        const oneWeekAgo = new Date(Date.now() - 3600 * 1000 * 24 * 7);
 
         if (!recommendation) {
             // 기존 데이터가 없을 경우, 새 데이터 생성 후 202 응답
@@ -35,7 +36,7 @@ export async function GET(req) {
             });
             return Response.json([]); // 빈 배열 반환하여 오류 방지
         } 
-        else if (new Date(recommendation[0].created_at) < oneDayAgo) {
+        else if (new Date(recommendation[0].created_at) < oneWeekAgo) {
             // 데이터가 오래된 경우, 기존 데이터를 반환하면서 Try.py 실행
             console.log("추천 데이터 오래됨, Try.py 실행");
             exec(`python3 server/Try.py "${symbol}"`, (error, stdout, stderr) => {
