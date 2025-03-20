@@ -79,7 +79,7 @@ export default function SearchResults() {
         } else {
           setIsFavorite(false);
         }
-        console.log(isFavorite);
+        // console.log(isFavorite);
       } catch (error) {
         console.error("즐겨찾기 조회 에러:", error);
       }

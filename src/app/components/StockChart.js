@@ -55,6 +55,7 @@ function CustomMarkers(props) {
 
         // 2) 가장 가까운 data[closestIndex]를 가져옴
         const matchedData = data[closestIndex];
+        console.log(matchedData);
 
         // 3) xScale, yScale을 통해 픽셀 좌표 계산
         //    - 범주형(category) 스케일에서는 xScale(matchedData.time)이
@@ -76,10 +77,10 @@ function CustomMarkers(props) {
         return (
           <g key={rec.Key ?? idx}>
             {/* 마커 (원) */}
-            <circle cx={x} cy={y} r={6} fill={color} />
+            <circle cx={x+20} cy={y} r={6} fill={color} />
             {/* 마커 라벨 (텍스트) */}
             <text
-              x={x}
+              x={x + 20}
               y={y - 10}
               textAnchor="middle"
               fill={color}
