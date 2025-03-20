@@ -15,11 +15,10 @@ export default function SearchResults() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openReports, setOpenReports] = useState({});
-  const [user, setUser] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(null);
 
   useEffect(() => {
     // let socket;
-
     async function fetchStockData() {
       if (!query) return;
       try {
@@ -54,6 +53,7 @@ export default function SearchResults() {
       }
       setLoading(false);
     }
+
     fetchStockData();
     fetchRecommendations();
 
@@ -67,6 +67,25 @@ export default function SearchResults() {
     // return () => {
     //   if (socket) socket.disconnect();
     // };
+  }, [query]);
+
+  useEffect(() => {
+    async function fetchFavorites() {
+      try {
+        const response = await fetch("/api/favorite");
+        const favorites = await response.json();
+        if (favorites.some(fav => fav.symbol === query)) {
+          setIsFavorite(true);
+        } else {
+          setIsFavorite(false);
+        }
+        console.log(isFavorite);
+      } catch (error) {
+        console.error("즐겨찾기 조회 에러:", error);
+      }
+    }
+
+    fetchFavorites();
   }, [query]);
 
   const formattedRecommendations = useMemo(() => {
@@ -92,22 +111,38 @@ export default function SearchResults() {
     }));
   };
 
-  const handleAddToFavorites = async () => {
-    try {
-      const response = await fetch("/api/favorite", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ symbol: query }),
-      });
-
-      const result = await response.json();
-      if (result.error) throw new Error(result.error);
-
-      alert("즐겨찾기에 추가되었습니다!");
-    } catch (error) {
-      alert(error.message);
+  // 토글 함수: 체크박스 상태에 따라 즐겨찾기 추가 또는 제거
+  const handleToggleFavorite = async () => {
+    if (!isFavorite) {
+      // 즐겨찾기에 추가
+      try {
+        const response = await fetch("/api/favorite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol: query }),
+        });
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+        alert("즐겨찾기에 추가되었습니다!");
+        setIsFavorite(true);
+      } catch (error) {
+        alert(error.message);
+      }
+    } else {
+      // 즐겨찾기에서 제거
+      try {
+        const response = await fetch("/api/favorite", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol: query }),
+        });
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+        alert("즐겨찾기에서 제거되었습니다!");
+        setIsFavorite(false);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
@@ -137,8 +172,52 @@ export default function SearchResults() {
         <div className={styles["pageTitle"]}>
           <h1>{query} / {stockData?.companyName || "Loading"}</h1>
           <div className={styles["buttonContainer"]}>
-            <button onClick={handleAddToFavorites}>Add to Favoirtes</button>
-            <button onClick={handleRunTry}>Force Update</button>
+            {/* 즐겨찾기 기능을 위한 체크박스 (From Uiverse.io by andrew-demchenk0) */}
+            {isFavorite === null ? (
+              <></>
+            ) : (
+              <label className={styles["container"]}>
+                <input type="checkbox" onChange={handleToggleFavorite} checked={isFavorite} />
+                <svg
+                  height="24px"
+                  id="Layer_1"
+                  version="1.2"
+                  viewBox="0 0 24 24"
+                  width="24px"
+                  xmlSpace="preserve"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <g>
+                    <g>
+                      <path d="M9.362,9.158c0,0-3.16,0.35-5.268,0.584c-0.19,0.023-0.358,0.15-0.421,0.343s0,0.394,0.14,0.521
+            c1.566,1.429,3.919,3.569,3.919,3.569c-0.002,0-0.646,3.113-1.074,5.19c-0.036,0.188,0.032,0.387,0.196,0.506
+            c0.163,0.119,0.373,0.121,0.538,0.028c1.844-1.048,4.606-2.624,4.606-2.624s2.763,1.576,4.604,2.625
+            c0.168,0.092,0.378,0.09,0.541-0.029c0.164-0.119,0.232-0.318,0.195-0.505c-0.428-2.078-1.071-5.191-1.071-5.191
+            s2.353-2.14,3.919-3.566c0.14-0.131,0.202-0.332,0.14-0.524s-0.23-0.319-0.42-0.341c-2.108-0.236-5.269-0.586-5.269-0.586
+            s-1.31-2.898-2.183-4.83c-0.082-0.173-0.254-0.294-0.456-0.294s-0.375,0.122-0.453,0.294C10.671,6.26,9.362,9.158,9.362,9.158z" />
+                    </g>
+                  </g>
+                </svg>
+              </label>
+            )}
+            <button type="button" className={styles.button} onClick={handleRunTry}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                className="bi bi-arrow-repeat"
+                viewBox="0 0 16 16"
+              >
+                <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z" />
+                <path
+                  fillRule="evenodd"
+                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"
+                />
+              </svg>
+              Refresh
+            </button>
           </div>
         </div>
         {stockData ? (

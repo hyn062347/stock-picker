@@ -23,8 +23,8 @@ function CustomMarkers(props) {
     // ...기타 props (offset, xAxis, yAxis 등)도 들어오지만 여기서는 사용 X
   } = props;
 
-  console.log(props.yAxisMap);
-  console.log(props.xAxisMap);
+  // console.log(props.yAxisMap);
+  // console.log(props.xAxisMap);
 
   const xAxis = xAxisMap["0"];
   const yAxisLeft = yAxisMap["left"];
