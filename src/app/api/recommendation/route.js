@@ -1,8 +1,5 @@
-import mysql from "mysql2/promise";
 import pool from "@/app/lib/db"
 import { exec } from "child_process"
-import { stdout } from "process";
-import { io } from "../../../../server/socket";
 
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
@@ -31,7 +28,6 @@ export async function GET(req) {
                     console.error(`Try.py Error: ${stderr}`);
                 } else {
                     console.log(`Try.py 실행 결과: ${stdout}`);
-                    io.emit("pool_updated", { symbol });
                 }
             });
             return Response.json([]); // 빈 배열 반환하여 오류 방지
@@ -44,7 +40,6 @@ export async function GET(req) {
                     console.error(`Try.py Error: ${stderr}`);
                 } else {
                     console.log(`Try.py 실행 결과: ${stdout}`);
-                    io.emit("pool_updated", { symbol });
                 }
             });
         }
