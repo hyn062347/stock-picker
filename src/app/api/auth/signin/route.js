@@ -6,7 +6,10 @@ export async function POST(req) {
   try {
     const { email, password } = await req.json();
 
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+    // PostgreSQL에 맞게 자리 표시자를 $1로 변경하고 결과에서 rows를 추출합니다.
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const rows = result.rows;
+
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "User not found" }), { status: 401 });
     }
