@@ -8,11 +8,10 @@ export async function createSession(userId) {
   const expires = new Date();
   expires.setHours(expires.getHours() + 1); // 1시간 후 만료
 
-  await pool.query("INSERT INTO sessions (id, user_id, expires) VALUES (?, ?, ?)", [
-    sessionId,
-    userId,
-    expires,
-  ]);
+  await pool.query(
+    "INSERT INTO sessions (id, user_id, expires) VALUES ($1, $2, $3)",
+    [sessionId, userId, expires]
+  );
 
   // 쿠키에 세션 ID 저장
   const cookieStore = await cookies();
@@ -30,25 +29,26 @@ export async function refreshSession(sessionId) {
   const expires = new Date();
   expires.setHours(expires.getHours() + 1); // 1시간 연장
 
-  await pool.query("UPDATE sessions SET expires = ? WHERE id = ?", [expires, sessionId]);
+  await pool.query("UPDATE sessions SET expires = $1 WHERE id = $2", [expires, sessionId]);
 }
 
 // 세션 확인
 export async function getSession() {
   const cookieStore = await cookies();
-  const sessionId = cookieStore.get("sessionId")?.value; // ✅ get()을 동기적으로 호출
+  const sessionId = cookieStore.get("sessionId")?.value; // get()을 동기적으로 호출
   if (!sessionId) return null;
 
-  const [rows] = await pool.query("SELECT * FROM sessions WHERE id = ? AND expires > NOW()", [
-    sessionId,
-  ]);
+  const result = await pool.query(
+    "SELECT * FROM sessions WHERE id = $1 AND expires > NOW()",
+    [sessionId]
+  );
+  const rows = result.rows;
 
   if (rows.length > 0) {
     // 사용자가 활동할 때마다 세션 연장
     await refreshSession(sessionId);
     return rows[0];
   }
-
 
   return null;
 }
@@ -59,6 +59,6 @@ export async function destroySession() {
   const sessionId = cookieStore.get("sessionId")?.value;
   if (!sessionId) return;
 
-  await pool.query("DELETE FROM sessions WHERE id = ?", [sessionId]);
+  await pool.query("DELETE FROM sessions WHERE id = $1", [sessionId]);
   cookieStore.delete("sessionId");
 }

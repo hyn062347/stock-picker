@@ -55,7 +55,7 @@ function CustomMarkers(props) {
 
         // 2) 가장 가까운 data[closestIndex]를 가져옴
         const matchedData = data[closestIndex];
-        console.log(matchedData);
+        // console.log(matchedData);
 
         // 3) xScale, yScale을 통해 픽셀 좌표 계산
         //    - 범주형(category) 스케일에서는 xScale(matchedData.time)이

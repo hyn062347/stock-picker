@@ -10,8 +10,8 @@ export default async function Home() {
   let username = null;
 
   if (session) {
-    const [rows] = await pool.query("SELECT username FROM users WHERE id = ?", [session.user_id]);
-    username = rows.length > 0 ? rows[0].username : null;
+    const result = await pool.query("SELECT username FROM users WHERE id = $1", [session.user_id]);
+    username = result.rows.length > 0 ? result.rows[0].username : null;
   }
 
   return (
