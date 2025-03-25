@@ -2,10 +2,9 @@ from crewai.tools import tool
 from crewai_tools import ScrapeWebsiteTool
 from crewai import Task, Crew, Agent
 from dotenv import load_dotenv
-import socketio
 import yfinance as yf
 import os
-import mysql.connector
+import psycopg2
 import sys
 
 #환경변수 저장
@@ -17,31 +16,9 @@ DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
-    "database": os.getenv("DB_DATABASE")
+    "database": os.getenv("DB_NAME"),
+    "port": os.getenv("DB_PORT")
 }
-
-#WebSocket 클라이언트 생성
-sio = socketio.Client()
-
-try:
-    sio.connect("http://localhost:4000")  # Next.js WebSocket 서버에 연결
-    print("✅ WebSocket 연결됨")
-except Exception as e:
-    print("⚠️ WebSocket 연결 실패:", e)
-
-def notify_client(symbol):
-    """WebSocket을 통해 클라이언트에 새로운 추천 데이터가 추가되었음을 알림"""
-    if not sio.connected:
-        print("⚠️ WebSocket이 연결되지 않음. 재연결 시도 중...")
-        try:
-            sio.connect("http://localhost:4000")
-            print("✅ WebSocket 재연결 성공")
-        except Exception as e:
-            print(f"❌ WebSocket 재연결 실패: {e}")
-            return  # 연결 실패하면 emit을 실행하지 않음
-
-    sio.emit("db_updated", {"symbol": symbol})
-    print(f"WebSocket 메시지 전송: {symbol}")
 
 #실행시 심볼 초기화
 if len(sys.argv) > 1:
@@ -50,13 +27,9 @@ else:
     print("No Symbol")
     sys.exit(1)
 
-#DB 저장
-def connect_db():
-    return mysql.connector.connect(**DB_CONFIG)
-
 # DB 연결 함수
 def connect_db():
-    return mysql.connector.connect(**DB_CONFIG)
+    return psycopg2.connect(**DB_CONFIG)
 
 # DB 저장 함수
 def save_rmd(symbol, recommendation, report):
@@ -72,7 +45,6 @@ def save_rmd(symbol, recommendation, report):
 
     cursor.close()
     conn.close()
-    notify_client(symbol)
     print(f" {symbol} Data Saved.")
 
 #Tools

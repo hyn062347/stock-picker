@@ -1,10 +1,8 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import io from "socket.io-client";
 import Header from "../components/Header";
 import styles from "./page.module.css";
-import dynamic from "next/dynamic";
 import Markdown from "react-markdown";
 import StockChart from "../components/StockChart";
 
