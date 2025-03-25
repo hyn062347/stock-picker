@@ -1,12 +1,12 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Header from "../components/Header";
 import styles from "./page.module.css";
 import Markdown from "react-markdown";
 import StockChart from "../components/StockChart";
 
-export default function SearchResults() {
+function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
   const [stockData, setStockData] = useState(null);
@@ -16,18 +16,15 @@ export default function SearchResults() {
   const [isFavorite, setIsFavorite] = useState(null);
 
   useEffect(() => {
-    // let socket;
     async function fetchStockData() {
       if (!query) return;
       try {
         const response = await fetch(`/api/stock?symbol=${query}`);
         const data = await response.json();
 
-        // console.log(data);
         if (!data || data.error) {
           throw new Error(data.error || "데이터를 불러오지 못했습니다.");
         }
-
         setStockData(data);
       } catch (error) {
         console.error("Stock data fetch error:", error);
@@ -41,7 +38,7 @@ export default function SearchResults() {
       if (!query) return;
       setLoading(true);
       try {
-        const response = await fetch(`./api/recommendation?symbol=${query}`);
+        const response = await fetch(`/api/recommendation?symbol=${query}`);
         const data = await response.json();
         if (!data || data.error) throw new Error(data.error || "추천 정보를 불러오지 못했습니다.");
         setRecommendations(data);
@@ -54,17 +51,6 @@ export default function SearchResults() {
 
     fetchStockData();
     fetchRecommendations();
-
-    // socket = io("http://localhost:4000");
-    // socket.on("db_updated", (data) => {
-    //   console.log("새로운 추천 데이터 수신:", data);
-    //   if (data.symbol === query) {
-    //     fetchRecommendations(); // 새로운 데이터가 추가되었을 때 즉시 업데이트
-    //   }
-    // });
-    // return () => {
-    //   if (socket) socket.disconnect();
-    // };
   }, [query]);
 
   useEffect(() => {
@@ -77,12 +63,10 @@ export default function SearchResults() {
         } else {
           setIsFavorite(false);
         }
-        // console.log(isFavorite);
       } catch (error) {
         console.error("즐겨찾기 조회 에러:", error);
       }
     }
-
     fetchFavorites();
   }, [query]);
 
@@ -101,18 +85,15 @@ export default function SearchResults() {
     }));
   }, [recommendations]);
 
-  //각 index 마다 useState
   const toggleReport = (index) => {
-    setOpenReports((prev) => ({
+    setOpenReports(prev => ({
       ...prev,
       [index]: !prev[index],
     }));
   };
 
-  // 토글 함수: 체크박스 상태에 따라 즐겨찾기 추가 또는 제거
   const handleToggleFavorite = async () => {
     if (!isFavorite) {
-      // 즐겨찾기에 추가
       try {
         const response = await fetch("/api/favorite", {
           method: "POST",
@@ -127,7 +108,6 @@ export default function SearchResults() {
         alert(error.message);
       }
     } else {
-      // 즐겨찾기에서 제거
       try {
         const response = await fetch("/api/favorite", {
           method: "DELETE",
@@ -148,15 +128,11 @@ export default function SearchResults() {
     try {
       const response = await fetch("/api/run-try", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbol: query }),
       });
-
       const result = await response.json();
       if (result.error) throw new Error(result.error);
-
       alert("Try.py 실행 요청 완료!");
     } catch (error) {
       alert("실행 오류: " + error.message);
@@ -166,15 +142,14 @@ export default function SearchResults() {
   return (
     <div>
       <Header />
-      <div className={styles["searchPage"]}>
-        <div className={styles["pageTitle"]}>
+      <div className={styles.searchPage}>
+        <div className={styles.pageTitle}>
           <h1>{query} / {stockData?.companyName || "Loading"}</h1>
-          <div className={styles["buttonContainer"]}>
-            {/* 즐겨찾기 기능을 위한 체크박스 (From Uiverse.io by andrew-demchenk0) */}
+          <div className={styles.buttonContainer}>
             {isFavorite === null ? (
               <></>
             ) : (
-              <label className={styles["container"]}>
+              <label className={styles.container}>
                 <input type="checkbox" onChange={handleToggleFavorite} checked={isFavorite} />
                 <svg
                   height="24px"
@@ -189,11 +164,11 @@ export default function SearchResults() {
                   <g>
                     <g>
                       <path d="M9.362,9.158c0,0-3.16,0.35-5.268,0.584c-0.19,0.023-0.358,0.15-0.421,0.343s0,0.394,0.14,0.521
-            c1.566,1.429,3.919,3.569,3.919,3.569c-0.002,0-0.646,3.113-1.074,5.19c-0.036,0.188,0.032,0.387,0.196,0.506
-            c0.163,0.119,0.373,0.121,0.538,0.028c1.844-1.048,4.606-2.624,4.606-2.624s2.763,1.576,4.604,2.625
-            c0.168,0.092,0.378,0.09,0.541-0.029c0.164-0.119,0.232-0.318,0.195-0.505c-0.428-2.078-1.071-5.191-1.071-5.191
-            s2.353-2.14,3.919-3.566c0.14-0.131,0.202-0.332,0.14-0.524s-0.23-0.319-0.42-0.341c-2.108-0.236-5.269-0.586-5.269-0.586
-            s-1.31-2.898-2.183-4.83c-0.082-0.173-0.254-0.294-0.456-0.294s-0.375,0.122-0.453,0.294C10.671,6.26,9.362,9.158,9.362,9.158z" />
+                        c1.566,1.429,3.919,3.569,3.919,3.569c-0.002,0-0.646,3.113-1.074,5.19c-0.036,0.188,0.032,0.387,0.196,0.506
+                        c0.163,0.119,0.373,0.121,0.538,0.028c1.844-1.048,4.606-2.624,4.606-2.624s2.763,1.576,4.604,2.625
+                        c0.168,0.092,0.378,0.09,0.541-0.029c0.164-0.119,0.232-0.318,0.195-0.505c-0.428-2.078-1.071-5.191-1.071-5.191
+                        s2.353-2.14,3.919-3.566c0.14-0.131,0.202-0.332,0.14-0.524s-0.23-0.319-0.42-0.341c-2.108-0.236-5.269-0.586-5.269-0.586
+                        s-1.31-2.898-2.183-4.83c-0.082-0.173-0.254-0.294-0.456-0.294s-0.375,0.122-0.453,0.294C10.671,6.26,9.362,9.158,9.362,9.158z" />
                     </g>
                   </g>
                 </svg>
@@ -223,7 +198,7 @@ export default function SearchResults() {
             <p>현재 가격: {stockData.currentPrice}</p>
             <p>시작가: {stockData.openPrice}</p>
             <p>종가: {stockData.closePrice}</p>
-            <div className={styles["chartContainer"]}>
+            <div className={styles.chartContainer}>
               <StockChart data={stockData.chartData} recommendations={formattedRecommendations} />
             </div>
           </div>
@@ -232,17 +207,19 @@ export default function SearchResults() {
             <p>현재 가격: 로딩중...</p>
             <p>시작가: 로딩중...</p>
             <p>종가: 로딩중...</p>
-            <div className={styles["loadingPlaceholder"]}></div>
+            <div className={styles.loadingPlaceholder}></div>
           </div>
         )}
         {formattedRecommendations.length > 0 ? (
           formattedRecommendations.map((rec) => (
-            <div key={rec.key} className={styles["recommendation"]}>
-              <div className={styles["recTitle"]}>
+            <div key={rec.key} className={styles.recommendation}>
+              <div className={styles.recTitle}>
                 <p className={rec.className}>{rec.date} {rec.recommendation}</p>
-                <button className={styles["viewButton"]} onClick={() => toggleReport(rec.key)}>{openReports[rec.key] ? "Hide" : "Open"}</button>
+                <button className={styles.viewButton} onClick={() => toggleReport(rec.key)}>
+                  {openReports[rec.key] ? "Hide" : "Open"}
+                </button>
               </div>
-              <div className={`${styles["report"]} ${openReports[rec.key] ? styles["open"] : ""}`}>
+              <div className={`${styles.report} ${openReports[rec.key] ? styles.open : ""}`}>
                 <Markdown>{rec.report}</Markdown>
               </div>
             </div>
@@ -252,5 +229,13 @@ export default function SearchResults() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchResults />
+    </Suspense>
   );
 }
