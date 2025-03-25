@@ -1,6 +1,7 @@
 import pool from "@/app/lib/db"
 import bcrypt from "bcryptjs";
 import { createSession } from "@/app/lib/sessions";
+export const runtime = "nodejs";
 
 export async function POST(req) {
   try {
