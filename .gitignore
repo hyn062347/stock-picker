@@ -40,10 +40,3 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 src/app/lib/db.js
-
-.env.local
-CREW AI TEST/tools.py
-CREW AI TEST/Task.py
-CREW AI TEST/StockAnalysisTeam.py
-CREW AI TEST/initialize.py
-/server
