@@ -126,7 +126,7 @@ function SearchResults() {
 
   const handleRunTry = async () => {
     try {
-      const response = await fetch("/api/run-try", {
+      const response = await fetch("/api/Try", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbol: query }),
