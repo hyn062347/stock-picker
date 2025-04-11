@@ -131,8 +131,20 @@ function SearchResults() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbol: query }),
       });
+
+      // 응답 상태와 헤더 로그
+      console.log("HTTP Status:", response.status);
+      console.log("Content-Type:", response.headers.get("Content-Type"));
+
+      // 응답을 text 로 읽어서 로그 찍기
+      const responseText = await response.clone().text();
+      console.log("Response Body as text:", responseText);
+
       const result = await response.json();
-      if (result.error) throw new Error(result.error);
+      if (result.error) {
+        console.log(error)
+        throw new Error(result.error);
+      }
       alert("Try.py 실행 요청 완료!");
     } catch (error) {
       alert("실행 오류: " + error.message);

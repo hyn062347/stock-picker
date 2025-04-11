@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 import psycopg2
 import yfinance as yf
@@ -230,10 +229,18 @@ def handler(request):
     GET 요청에서는 query string, POST 요청에서는 JSON body에서 "symbol" 키를 읽습니다.
     """
     # 요청에서 심볼을 읽기 (대소문자 구분 없이)
+    print("Request : ", request)
     symbol = None
-    if request.method == "GET":
-        params = request.query
-        symbol = params.get("symbol")
+    if request.method == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
+            "body": ""
+        }
     elif request.method == "POST":
         try:
             body = request.get_json()
