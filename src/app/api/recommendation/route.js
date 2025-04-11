@@ -32,17 +32,18 @@ export async function GET(req) {
         }
       });
       return Response.json([]); // 빈 배열 반환
-    } else if (new Date(recommendation[0].created_at) < oneWeekAgo) {
-      // 데이터가 오래된 경우, 기존 데이터 반환 후 Try.py 실행
-      console.log("추천 데이터 오래됨, Try.py 실행");
-      exec(`python3 server/Try.py "${symbol}"`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Try.py Error: ${stderr}`);
-        } else {
-          console.log(`Try.py 실행 결과: ${stdout}`);
-        }
-      });
-    }
+    } 
+    // else if (new Date(recommendation[0].created_at) < oneWeekAgo) {
+    //   // 데이터가 오래된 경우, 기존 데이터 반환 후 Try.py 실행
+    //   console.log("추천 데이터 오래됨, Try.py 실행");
+    //   exec(`python3 server/Try.py "${symbol}"`, (error, stdout, stderr) => {
+    //     if (error) {
+    //       console.error(`Try.py Error: ${stderr}`);
+    //     } else {
+    //       console.log(`Try.py 실행 결과: ${stdout}`);
+    //     }
+    //   });
+    // }
     return Response.json(recommendation);
   } catch (error) {
     console.error("Database query error:", error);
