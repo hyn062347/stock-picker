@@ -3,6 +3,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Header from "../components/Header";
 import styles from "./page.module.css";
+import dynamic from "next/dynamic";
 import Markdown from "react-markdown";
 import StockChart from "../components/StockChart";
 

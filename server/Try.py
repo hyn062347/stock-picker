@@ -4,7 +4,7 @@ from crewai import Task, Crew, Agent
 from dotenv import load_dotenv
 import yfinance as yf
 import os
-import psycopg2
+import mysql.connector
 import sys
 
 #환경변수 저장
@@ -16,8 +16,7 @@ DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
-    "database": os.getenv("DB_NAME"),
-    "port": os.getenv("DB_PORT")
+    "database": os.getenv("DB_DATABASE")
 }
 
 #실행시 심볼 초기화
@@ -27,9 +26,13 @@ else:
     print("No Symbol")
     sys.exit(1)
 
+#DB 저장
+def connect_db():
+    return mysql.connector.connect(**DB_CONFIG)
+
 # DB 연결 함수
 def connect_db():
-    return psycopg2.connect(**DB_CONFIG)
+    return mysql.connector.connect(**DB_CONFIG)
 
 # DB 저장 함수
 def save_rmd(symbol, recommendation, report):
