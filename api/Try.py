@@ -4,8 +4,8 @@ import psycopg2
 import yfinance as yf
 from crewai.tools import tool
 from crewai_tools import ScrapeWebsiteTool
-from crewai import Task, Crew, Agent
-from dotenv import load_dotenv
+# from crewai import Task, Crew, Agent
+# from dotenv import load_dotenv
 
 # 환경변수 로드 (Vercel에서는 환경변수를 프로젝트 설정으로 관리할 수 있습니다)
 load_dotenv()
