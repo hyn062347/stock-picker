@@ -269,7 +269,10 @@ def handler(request):
     try:
         save_rmd(symbol, recommendation_decision, investment_report)
     except Exception as e:
-        print(f"DB save error: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": "DB save error", "details": str(e)})
+        }
 
     response_body = {
         "recommendation": recommendation_decision,
