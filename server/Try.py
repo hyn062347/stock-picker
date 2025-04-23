@@ -145,7 +145,7 @@ technical_analyst = Agent(
     tools=[
         stock_price,
         # stock_price_6month,
-        # stock_price_1Year,
+        stock_price_1Year,
         # stock_price_5Year,
     ]
 )
