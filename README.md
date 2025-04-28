@@ -17,3 +17,4 @@ Python YahooFinance 를 통해 제공받은 정보를 토대로 CrewAI가 분석
 ## 프로젝트 구조도
 
 ## 개발환경
+`NextJS` `Node.js` `Python` `PostgreSQL(Vercel & supabase)` `MySQL(Local)`
