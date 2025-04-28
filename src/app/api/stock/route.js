@@ -13,14 +13,23 @@ export async function GET(req) {
     // ✅ 주식 기본 정보 가져오기 (거래량 포함)
     const quote = await yahooFinance.quote(symbol);
 
-    // ✅ period1을 한 달 전으로 설정 (UTC 기준)
+    const range = searchParams.get("range") || "1M";
     const now = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setDate(now.getDate() - 30); // 한 달 전 날짜 계산
+    let period1;
 
-    // ✅ 하루 단위(`1d`)로 한 달치 데이터를 요청
+    if (range === "1Y") {
+      period1 = new Date(now);
+      period1.setFullYear(period1.getFullYear() - 1);
+    } else if (range === "MAX") {
+      period1 = new Date("2000-01-01"); // 대략적인 최대 기간 시작일
+    } else {
+      period1 = new Date(now);
+      period1.setDate(period1.getDate() - 30);
+    }
+
+    // ✅ 하루 단위(`1d`)로 기간에 따른 데이터를 요청
     const chartData = await yahooFinance.chart(symbol, {
-      period1: oneMonthAgo.toISOString().split("T")[0], // YYYY-MM-DD 형식
+      period1: period1.toISOString().split("T")[0], // YYYY-MM-DD 형식
       interval: "1d", // 하루 단위
     });
 

@@ -14,12 +14,13 @@ function SearchResults() {
   const [loading, setLoading] = useState(true);
   const [openReports, setOpenReports] = useState({});
   const [isFavorite, setIsFavorite] = useState(null);
+  const [range, setRange] = useState("1M");
 
   useEffect(() => {
     async function fetchStockData() {
       if (!query) return;
       try {
-        const response = await fetch(`/api/stock?symbol=${query}`);
+        const response = await fetch(`/api/stock?symbol=${query}&range=${range}`);
         const data = await response.json();
 
         if (!data || data.error) {
@@ -204,6 +205,11 @@ function SearchResults() {
               Refresh
             </button>
           </div>
+        </div>
+        <div className={styles.rangeButtons}>
+          <button onClick={() => setRange("1M")} className={`${styles.rangeButton} ${range === "1M" ? styles.active : styles.inactive}`}>1개월</button>
+          <button onClick={() => setRange("1Y")} className={`${styles.rangeButton} ${range === "1Y" ? styles.active : styles.inactive}`}>1년</button>
+          <button onClick={() => setRange("MAX")} className={`${styles.rangeButton} ${range === "MAX" ? styles.active : styles.inactive}`}>전체</button>
         </div>
         {stockData ? (
           <div>

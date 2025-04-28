@@ -189,3 +189,18 @@
     }
   }
   
+  .rangeButtons {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.rangeButton {
+    background-color: #222;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    width: 60px;
+    height: 30px;
+}
