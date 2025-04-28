@@ -52,7 +52,7 @@ function SearchResults() {
 
     fetchStockData();
     fetchRecommendations();
-  }, [query]);
+  }, [query, range]);
 
   useEffect(() => {
     async function fetchFavorites() {
