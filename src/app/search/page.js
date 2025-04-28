@@ -58,6 +58,7 @@ function SearchResults() {
     async function fetchFavorites() {
       try {
         const response = await fetch("/api/favorite");
+        if(response.status === 401) return;
         const favorites = await response.json();
         if (favorites.some(fav => fav.symbol === query)) {
           setIsFavorite(true);
