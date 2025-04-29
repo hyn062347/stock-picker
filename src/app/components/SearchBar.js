@@ -32,7 +32,7 @@ export default function SearchBar({ onSearch }) {
       } finally {
         setLoading(false);
       }
-    }, 300); // ⏳ 300ms 딜레이 적용
+    }, 50); // 50ms 딜레이 적용
   }, [query]);
 
   // ✅ 검색어 제출 시 자동완성 목록의 첫 번째 항목 선택
