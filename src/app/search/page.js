@@ -127,30 +127,32 @@ function SearchResults() {
   };
 
   const handleRunTry = async () => {
-    try {
-      const response = await fetch("/api/Try", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol: query }),
-      });
+    // try {
+    //   const response = await fetch("/api/Try", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ symbol: query }),
+    //   });
 
-      // 응답 상태와 헤더 로그
-      console.log("HTTP Status:", response.status);
-      console.log("Content-Type:", response.headers.get("Content-Type"));
+    //   // 응답 상태와 헤더 로그
+    //   console.log("HTTP Status:", response.status);
+    //   console.log("Content-Type:", response.headers.get("Content-Type"));
 
-      // 응답을 text 로 읽어서 로그 찍기
-      const responseText = await response.clone().text();
-      console.log("Response Body as text:", responseText);
+    //   // 응답을 text 로 읽어서 로그 찍기
+    //   const responseText = await response.clone().text();
+    //   console.log("Response Body as text:", responseText);
 
-      const result = await response.json();
-      if (result.error) {
-        console.log(error)
-        throw new Error(result.error);
-      }
-      alert("Try.py 실행 요청 완료!");
-    } catch (error) {
-      alert("실행 오류: " + error.message);
-    }
+    //   const result = await response.json();
+    //   if (result.error) {
+    //     console.log(error)
+    //     throw new Error(result.error);
+    //   }
+    //   alert("Try.py 실행 요청 완료!");
+    // } catch (error) {
+    //   alert("실행 오류: " + error.message);
+    // }
+    // Vercel 환경에서 Python Library 중 Crewai, Crewai-tools가 너무 커서 Serverless Function 으로 안들어갑니다.
+    alert("Vercel 환경에서 지원불가");
   };
 
   return (
