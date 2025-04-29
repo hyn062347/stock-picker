@@ -143,7 +143,7 @@
 }
 
 /* From Uiverse.io by JaydipPrajapati1910 */
-.button {
+.refreshButton {
     color: white;
     background-color: #222;
     font-weight: 500;
@@ -163,11 +163,7 @@
     gap: 0.1rem;
 }
 
-.button:hover {
-    background-color: #333;
-}
-
-.button svg {
+.refreshButton svg {
     display: inline;
     width: 1.3rem;
     height: 1.3rem;
@@ -175,7 +171,7 @@
     color: white;
 }
 
-.button:focus svg {
+.refreshButton:focus svg {
     animation: spin_357 0.5s linear;
 }
 
@@ -193,7 +189,7 @@
     display: flex;
     flex-direction: row;
     gap: 10px;
-    margin-bottom: 10px;
+    margin: 10px 0px;
 }
 
 .rangeButton {
@@ -203,12 +199,21 @@
     border-radius: 10px;
     width: 60px;
     height: 30px;
+    cursor: pointer;
 }
 
 .rangeButton:hover{
-    background-color: #333;
+    background-color: #5c5c5c;
+    color: white;
 }
 
 .active{
-    background-color: #777777;
+    background-color: #ccc;
+    color: black;
 }
+
+.buttonDisabled{
+    background: #ccc;
+    cursor: pointer;
+}
+

@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense, use } from "react";
 import Header from "../components/Header";
 import styles from "./page.module.css";
 import dynamic from "next/dynamic";
@@ -16,6 +16,7 @@ function SearchResults() {
   const [openReports, setOpenReports] = useState({});
   const [isFavorite, setIsFavorite] = useState(null);
   const [range, setRange] = useState("1M"); // 1M: 1 Month, 1Y: 1 Year, MAX: All
+  const [refresh, setRefresh] = useState(true);
 
   useEffect(() => {
     async function fetchStockData() {
@@ -35,24 +36,7 @@ function SearchResults() {
         setLoading(false);
       }
     }
-
-    async function fetchRecommendations() {
-      if (!query) return;
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/recommendation?symbol=${query}`);
-        const data = await response.json();
-        if (!data || data.error) throw new Error(data.error || "추천 정보를 불러오지 못했습니다.");
-        setRecommendations(data);
-      } catch (error) {
-        console.error("Recommendation fetch error:", error);
-        setRecommendations([]);
-      }
-      setLoading(false);
-    }
-
     fetchStockData();
-    fetchRecommendations();
   }, [query, range]);
 
   useEffect(() => {
@@ -72,7 +56,33 @@ function SearchResults() {
         console.error("즐겨찾기 조회 에러:", error);
       }
     }
+
+    async function fetchRecommendations() {
+      if (!query) return;
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/recommendation?symbol=${query}`);
+
+        if(response.status === 202){
+          alert("추천 데이터 없음. 추천 데이터 생성중");
+          setRefresh(false);
+          return;
+        }
+        else if(response.status === 203){
+          alert("추천 데이터 오래됨. 추천 데이터 생성중");
+          setRefresh(false);
+        }
+        const body = await response.json();
+        if (!body || body.error) throw new Error(body.error || "추천 정보를 불러오지 못했습니다.");
+        setRecommendations(body.data);
+      } catch (error) {
+        console.error("Recommendation fetch error:", error);
+        setRecommendations([]);
+      }
+      setLoading(false);
+    }
     fetchFavorites();
+    fetchRecommendations();
   }, [query]);
 
   const formattedRecommendations = useMemo(() => {
@@ -130,6 +140,7 @@ function SearchResults() {
   };
 
   const handleRunTry = async () => {
+    setRefresh(false);
     try {
       const response = await fetch("/api/run-try", {
         method: "POST",
@@ -179,7 +190,7 @@ function SearchResults() {
                 </svg>
               </label>
             )}
-            <button type="button" className={styles.button} onClick={handleRunTry}>
+            <button type="button" onClick={handleRunTry} disabled={!refresh} className={`${styles.refreshButton} ${!refresh ? styles.buttonDisabled : ""}`}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
