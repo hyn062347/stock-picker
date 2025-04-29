@@ -204,3 +204,11 @@
     width: 60px;
     height: 30px;
 }
+
+.rangeButton:hover{
+    background-color: #333;
+}
+
+.active{
+    background-color: #777777;
+}
