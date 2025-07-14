@@ -60,7 +60,9 @@ function CustomMarkers(props) {
         // 3) xScale, yScale을 통해 픽셀 좌표 계산
         //    - 범주형(category) 스케일에서는 xScale(matchedData.time)이
         //      “closestIndex에 해당하는 축 위치”로 매핑됩니다.
-        const x = xScale(matchedData.time);
+        const x =
+          xScale(matchedData.time) +
+          (typeof xScale.bandwidth === "function" ? xScale.bandwidth() / 2 : 0);
         const y = yScale(matchedData.price);
 
         // 차트 범위를 벗어났으면 표시하지 않음
@@ -77,7 +79,7 @@ function CustomMarkers(props) {
         return (
           <g key={rec.Key ?? idx}>
             {/* 마커 (원) */}
-            <circle cx={x+20} cy={y} r={6} fill={color} />
+            <circle cx={x} cy={y} r={6} fill={color} />
             {/* 마커 라벨 (텍스트) */}
             <text
               x={x + 20}

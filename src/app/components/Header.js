@@ -28,7 +28,8 @@ export default function SearchBar() {
                 className={styles["title"]}
                 onClick={() => router.push("/")}
             >Stock Picker</p>
-            <p className={styles["user"]}>{username}</p>
+            <p className={styles["user"]}
+                onClick={() => router.push("/favorite")}>{username}</p>
         </div>
     );
 }
