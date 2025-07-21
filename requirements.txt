@@ -1,0 +1,6 @@
+crewai==0.114.0
+crewai-tools==0.40.1
+mysql-connector-python==9.2.0
+pandas_ta==0.3.14b0
+python-dotenv==1.0.1
+yfinance==0.2.65

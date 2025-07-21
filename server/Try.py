@@ -1,10 +1,11 @@
 from crewai.tools import tool
-from crewai_tools import ScrapeWebsiteTool
 from crewai import Task, Crew, Agent
 from dotenv import load_dotenv
+from functools import lru_cache
+from server.NaverNews import get_news_tables
 import yfinance as yf
 import pandas_ta as ta
-import os, sys, json, time, random, mysql.connector
+import os, sys, json, time, mysql.connector, threading, re
 
 
 # ---------------------------------------------------------------------------
@@ -69,8 +70,23 @@ def save_rmd(report):
     conn.close()
     print(f" {symbol} Data Saved.")
 
+#Throttle
+_RATE_LOCK = threading.Lock()
+_LAST_CALL = 0.0          # epoch
+_MIN_GAP  = 1.0           # seconds  (0.5~2 사이 조정 가능)
+
+def throttle():
+    """모든 외부 API 호출 직전에 호출해 최소 간격을 보장한다."""
+    global _LAST_CALL
+    with _RATE_LOCK:
+        now = time.time()
+        wait = _MIN_GAP - (now - _LAST_CALL)
+        if wait > 0:
+            time.sleep(wait)
+        _LAST_CALL = time.time()
 
 # 공용 함수
+@lru_cache(maxsize=128)
 def get_price_df(ticker: str, period: str = "3mo", interval: str = "1d"):
     """
     Return historical OHLCV DataFrame for the given ticker using yfinance.
@@ -83,117 +99,75 @@ def get_price_df(ticker: str, period: str = "3mo", interval: str = "1d"):
     Returns:
         pandas.DataFrame: Historical price data indexed by date.
     """
-    return yf.Ticker(ticker).history(period=period, interval=interval)
+    return with_retry(lambda t: yf.Ticker(t).history(period=period, interval=interval), ticker)
+
+def with_retry(fn, *args, retries=2, pause=1.5, **kwargs):
+    """429 전용 초경량 백오프 래퍼 (최대 1회 재시도)"""
+    for i in range(retries):
+        try:
+            throttle()              # 호출 간격 1 초 유지
+            return fn(*args, **kwargs)
+        except Exception as e:
+            if "Too Many Requests" in str(e) and i == 0:
+                time.sleep(pause)   # 1.5 초만 쉬고 한 번만 재시도
+                continue
+            raise
 
 #Tools
 @tool("Stock News")
-def stock_news(ticker: str, retries: int = 3, pause: float = 2.0):
+def stock_news(ticker: str):
     """
     Useful to get news about a stock.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    for attempt in range(retries):
-        try:
-            return yf.Ticker(ticker).news
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
-    return yf.Ticker(ticker).news
+    return with_retry(lambda t: yf.Ticker(t).news, ticker)
 
-scrape_tool = ScrapeWebsiteTool()
+@tool("Naver Stock News")
+def naver_stock_news(ticker: str):
+    """
+    Useful to get news about a Korean stock.
+    The input should be a ticker, for example 086520.KQ, 004560.KS.
+    """
+    clean_ticker = re.sub(r'\D', '', ticker)
+    return get_news_tables(clean_ticker)
 
 @tool("Stock Price")
-def stock_price(ticker : str, retries: int = 3, pause: float = 2.0):
+def stock_price(ticker : str):
     """
     Useful to get stock price data of 3 months.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    for attempt in range(retries):
-        try:
-            return get_price_df(ticker)
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
     return get_price_df(ticker)
 
-
 @tool("RSI")
-def rsi(ticker: str, length: int = 14, retries: int = 3, pause: float = 2.0):
+def rsi(ticker: str, length: int = 14):
     """
     Useful to get RSI.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    for attempt in range(retries):
-        df = get_price_df(ticker)
-        df["RSI"] = ta.rsi(df["Close"], length=length)
-        try:
-            return df[["RSI"]].dropna()
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
+    df = get_price_df(ticker)
+    df["RSI"] = ta.rsi(df["Close"], length=length)
     return df[["RSI"]].dropna()
 
 
 @tool("MACD")
-def macd(ticker: str, retries: int = 3, pause: float = 2.0):
+def macd(ticker: str):
     """
     Useful to get MACD about a stock.
     The input should be a ticker, for example AAPL, TSLA.
     """
     df = get_price_df(ticker)
     macd_df = ta.macd(df["Close"], fast=12, slow=26, signal=9)
-    for attempt in range(retries):
-        try:
-            return macd_df.dropna()
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
     return macd_df.dropna()
 
 @tool("Bollinger")
-def bollinger(ticker: str, retries: int = 3, pause: float = 2.0):
+def bollinger(ticker: str):
     """
     Useful to get Bollinger data about a stock.
     The input should be a ticker, for example AAPL, TSLA.
     """
     df = get_price_df(ticker)
     bb_df = ta.bbands(df["Close"])
-    for attempt in range(retries):
-        try:
-            return bb_df.dropna()
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
     return bb_df.dropna()
 
 # @tool("Stock Price 1Year")
@@ -217,64 +191,28 @@ def bollinger(ticker: str, retries: int = 3, pause: float = 2.0):
 #     return ticker.history(period="1y", interval="1wk")
 
 @tool("Income Statement")
-def income_stmt(ticker : str, retries: int = 3, pause: float = 2.0):
+def income_stmt(ticker : str):
     """
     Useful to get the income statement of a company.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    for attempt in range(retries):
-        try:
-            return yf.Ticker(ticker).income_stmt
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
-    return yf.Ticker(ticker).income_stmt
+    return with_retry(lambda t: yf.Ticker(t).income_stmt, ticker)
 
 @tool("Balance Sheet")
-def balance_sheet(ticker: str, retries: int = 3, pause: float = 2.0):
+def balance_sheet(ticker: str):
     """
     Useful to get the balance sheet of a company.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    for attempt in range(retries):
-        try:
-            return yf.Ticker(ticker).balance_sheet
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
-    return yf.Ticker(ticker).balance_sheet
+    return with_retry(lambda t: yf.Ticker(t).balance_sheet, ticker)
 
 @tool("Insider Transactions")
-def insider_transactions(ticker: str, retries: int = 3, pause: float = 2.0):
+def insider_transactions(ticker: str):
     """
     Useful to get insider transactions of a stock.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    for attempt in range(retries):
-        try:
-            return yf.Ticker(ticker).insider_transactions
-        except Exception as e:
-            msg = str(e)
-            # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
-            if "Too Many Requests" in msg and attempt < retries - 1:
-                # 지수 back-off + 무작위 지터로 분산
-                sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
-                time.sleep(sleep_for)
-                continue
-            raise   # 다른 에러 또는 마지막 시도는 그대로 전파
-    return yf.Ticker(ticker).insider_transactions
+    return with_retry(lambda t: yf.Ticker(t).insider_transactions, ticker)
 
 # ---------------------------------------------------------------------------
 # JSON 스키마 (문자열 형태)
@@ -321,7 +259,7 @@ researcher = Agent(
     role="Researcher",
     goal="다양한 소스의 최신 뉴스를 수집·분석하여 종목 심리를 평가한다.",
     backstory="뉴스·SNS·웹사이트에서 정보를 수집하는 데이터 분석 전문가.",
-    tools=[scrape_tool, stock_news],
+    tools=[naver_stock_news, stock_news],
 )
 
 technical_analyst = Agent(
@@ -356,6 +294,8 @@ research = Task(
     agent=researcher,
     description=(
         "{company} 관련 정보를 수집하라."
+        " 한국 주식인 경우 `naver_stock_news 툴을,"
+        " 해외 주식인 경우 `stock_news` 툴을 사용하라."
         " JSON 스키마:\n" + SCHEMA_STRINGS["news"]
     ),
     expected_output=SCHEMA_STRINGS["news"],
