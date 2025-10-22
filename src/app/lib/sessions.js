@@ -8,7 +8,7 @@ export async function createSession(userId) {
   const expires = new Date();
   expires.setHours(expires.getHours() + 1); // 1시간 후 만료
 
-  await pool.query("INSERT INTO sessions (id, user_id, expires) VALUES (?, ?, ?)", [
+  await pool.query("INSERT INTO sessions (id, user_id, expires) VALUES ($1, $2, $3)", [
     sessionId,
     userId,
     expires,
@@ -30,7 +30,7 @@ export async function refreshSession(sessionId) {
   const expires = new Date();
   expires.setHours(expires.getHours() + 1); // 1시간 연장
 
-  await pool.query("UPDATE sessions SET expires = ? WHERE id = ?", [expires, sessionId]);
+  await pool.query("UPDATE sessions SET expires = $1 WHERE id = $2", [expires, sessionId]);
 }
 
 // 세션 확인
@@ -39,7 +39,7 @@ export async function getSession() {
   const sessionId = cookieStore.get("sessionId")?.value; // ✅ get()을 동기적으로 호출
   if (!sessionId) return null;
 
-  const [rows] = await pool.query("SELECT * FROM sessions WHERE id = ? AND expires > NOW()", [
+  const { rows } = await pool.query("SELECT * FROM sessions WHERE id = $1 AND expires > NOW()", [
     sessionId,
   ]);
 
@@ -59,6 +59,6 @@ export async function destroySession() {
   const sessionId = cookieStore.get("sessionId")?.value;
   if (!sessionId) return;
 
-  await pool.query("DELETE FROM sessions WHERE id = ?", [sessionId]);
+  await pool.query("DELETE FROM sessions WHERE id = $1", [sessionId]);
   cookieStore.delete("sessionId");
 }

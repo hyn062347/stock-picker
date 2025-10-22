@@ -1,7 +1,7 @@
 import { config as loadEnv } from "dotenv";
-import mysql from "mysql2/promise";
 import OpenAI from "openai";
 import yahooFinance from "yahoo-finance2";
+import pool from "@/app/lib/db";
 import { fetchForeignHoldingsTable, type ForeignHoldingRow } from "../n_finance/route";
 import { fetchNaverNewsArticles, type NaverArticle } from "../n_news/route";
 
@@ -15,20 +15,6 @@ if (!OPENAI_API_KEY) {
 }
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-
-const DB_CONFIG = {
-  host: process.env.DB_HOST ?? "",
-  user: process.env.DB_USER ?? "",
-  password: process.env.DB_PASSWORD ?? "",
-  database: process.env.DB_NAME ?? "",
-  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined,
-};
-
-const dbPool = mysql.createPool({
-  ...DB_CONFIG,
-  waitForConnections: true,
-  connectionLimit: 5,
-});
 
 const MIN_API_GAP_MS = 1_000;
 let throttleChain = Promise.resolve();
@@ -661,18 +647,13 @@ const RECO_PROMPT = `
 `.trim();
 
 async function saveRecommendation(result: { symbol: string; recommendation: string; score: number; report: string }) {
-  const connection = await dbPool.getConnection();
-  try {
-    await connection.execute(
-      `
-        INSERT INTO stock_recommendation (symbol, recommendation, score, report)
-        VALUES (?, ?, ?, ?)
-      `,
-      [result.symbol, result.recommendation, result.score, result.report]
-    );
-  } finally {
-    connection.release();
-  }
+  await pool.query(
+    `
+      INSERT INTO stock_recommendation (symbol, recommendation, score, report)
+      VALUES ($1, $2, $3, $4)
+    `,
+    [result.symbol, result.recommendation, result.score, result.report]
+  );
 }
 
 function isKoreanSymbol(symbol: string) {

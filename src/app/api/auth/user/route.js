@@ -8,7 +8,7 @@ export async function GET() {
         return new Response(JSON.stringify({ user: null }), { status: 200 });
       }
   
-      const [rows] = await pool.query("SELECT username FROM users WHERE id = ?", [session.user_id]);
+      const { rows } = await pool.query("SELECT username FROM users WHERE id = $1", [session.user_id]);
       if (rows.length === 0) {
         return new Response(JSON.stringify({ user: null }), { status: 200 });
       }

@@ -1,13 +1,27 @@
-import mysql from "mysql2/promise";
+import { Pool } from "pg";
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  // waitForConnections: true,
-  // connectionLimit: 10,  // ✅ 동시에 열 수 있는 최대 연결 수 설정
-  // queueLimit: 0,
+const connectionString =
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.DATABASE_URL_UNPOOLED;
+
+if (!connectionString) {
+  throw new Error("Missing PostgreSQL connection string. Set POSTGRES_URL or DATABASE_URL in .env.");
+}
+
+const pool = new Pool({
+  connectionString,
+  ssl: connectionString.includes("sslmode=no-verify")
+    ? undefined
+    : {
+        rejectUnauthorized: false,
+      },
 });
 
 export default pool;
+
+export async function query(text, params) {
+  const result = await pool.query(text, params);
+  return result.rows;
+}

@@ -6,7 +6,7 @@ export async function POST(req) {
   try {
     const { email, password } = await req.json();
 
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+    const { rows } = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "User not found" }), { status: 401 });
     }
