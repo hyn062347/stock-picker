@@ -1,5 +1,5 @@
 import pool from "@/app/lib/db";
-import { runAnalysis } from "@/app/api/rec_generate/route";
+import { runAnalysis } from "@/app/api/rec_generate/service";
 
 const SELECT_RECOMMENDATIONS_SQL = `
   SELECT
