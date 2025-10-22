@@ -3,6 +3,7 @@ from crewai import Task, Crew, Agent
 from dotenv import load_dotenv
 from functools import lru_cache
 from server.NaverNews import get_news_tables
+from NaverFF import get_FF_tables
 import yfinance as yf
 import pandas_ta as ta
 import os, sys, json, time, mysql.connector, threading, re
@@ -131,6 +132,17 @@ def naver_stock_news(ticker: str):
     clean_ticker = re.sub(r'\D', '', ticker)
     return get_news_tables(clean_ticker)
 
+@tool("Institutional and Foregin Holdings")
+def institutional_foreign_holdings(ticker: str):
+    """
+    Useful to get the current institutional and foreign ownership percentages for a stock.
+    The input should be a Korean stock ticker, e.g., '005930' for Samsung Electronics.
+    """
+    clean_ticker = re.sub(r'\D', '', ticker)
+    return get_FF_tables(clean_ticker)
+
+#--------------------Technical Analyst--------------------
+
 @tool("Stock Price")
 def stock_price(ticker : str):
     """
@@ -148,7 +160,6 @@ def rsi(ticker: str, length: int = 14):
     df = get_price_df(ticker)
     df["RSI"] = ta.rsi(df["Close"], length=length)
     return df[["RSI"]].dropna()
-
 
 @tool("MACD")
 def macd(ticker: str):
@@ -217,12 +228,28 @@ def insider_transactions(ticker: str):
 # ---------------------------------------------------------------------------
 # JSON 스키마 (문자열 형태)
 # ---------------------------------------------------------------------------
-NEWS_SCHEMA = {
+RESEARCH_SCHEMA = {
     "symbol": "string",
-    "sentiment_score": "float (-1~1)",
-    "top_headlines": [
-        {"title": "string", "link": "string", "sentiment": "pos|neg|neu"}
-    ]
+    "sentiment": {
+        "score": {"type": "float", "range": [-1.0, 1.0]},
+        "top_headlines": [
+            {
+                "title": "string",
+                "link": "string",
+                "sentiment": {"type": "string", "enum": ["pos", "neg", "neu"]}
+            }
+        ]
+    },
+    "ownership": {
+        "institutional": {
+            "current_pct": {"type": "float", "unit": "%"},
+            "delta_1d": {"type": "float", "unit": "pp"}
+        },
+        "foreign": {
+            "current_pct": {"type": "float", "unit": "%"},
+            "delta_1d": {"type": "float", "unit": "pp"}
+        }
+    }
 }
 TECH_SCHEMA = {
     "symbol": "string",
@@ -248,7 +275,7 @@ RECOMMEND_SCHEMA = {
 }
 
 SCHEMA_STRINGS = {
-    "news": json.dumps(NEWS_SCHEMA, ensure_ascii=False),
+    "research": json.dumps(RESEARCH_SCHEMA, ensure_ascii=False),
     "tech": json.dumps(TECH_SCHEMA, ensure_ascii=False),
     "fin": json.dumps(FIN_SCHEMA, ensure_ascii=False),
     "reco": json.dumps(RECOMMEND_SCHEMA, ensure_ascii=False),
@@ -259,7 +286,7 @@ researcher = Agent(
     role="Researcher",
     goal="다양한 소스의 최신 뉴스를 수집·분석하여 종목 심리를 평가한다.",
     backstory="뉴스·SNS·웹사이트에서 정보를 수집하는 데이터 분석 전문가.",
-    tools=[naver_stock_news, stock_news],
+    tools=[naver_stock_news, stock_news, institutional_foreign_holdings],
 )
 
 technical_analyst = Agent(
@@ -294,11 +321,11 @@ research = Task(
     agent=researcher,
     description=(
         "{company} 관련 정보를 수집하라."
-        " 한국 주식인 경우 `naver_stock_news 툴을,"
+        " 한국 주식인 경우 `naver_stock_news`, `institutional_foreign_holdings` 툴을,"
         " 해외 주식인 경우 `stock_news` 툴을 사용하라."
-        " JSON 스키마:\n" + SCHEMA_STRINGS["news"]
+        " JSON 스키마:\n" + SCHEMA_STRINGS["research"]
     ),
-    expected_output=SCHEMA_STRINGS["news"],
+    expected_output=SCHEMA_STRINGS["research"],
 )
 
 technical_analysis = Task(
