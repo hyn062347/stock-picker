@@ -1,11 +1,18 @@
 from crewai.tools import tool
-from crewai_tools import ScrapeWebsiteTool
 from crewai import Task, Crew, Agent
 from dotenv import load_dotenv
+from functools import lru_cache
+from server.NaverNews import get_news_tables
+from NaverFF import get_FF_tables
 import yfinance as yf
-import os
-import mysql.connector
-import sys
+import pandas_ta as ta
+import os, sys, json, time, mysql.connector, threading, re
+
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
 
 #환경변수 저장
 load_dotenv()
@@ -26,29 +33,86 @@ else:
     print("No Symbol")
     sys.exit(1)
 
-#DB 저장
-def connect_db():
-    return mysql.connector.connect(**DB_CONFIG)
-
-# DB 연결 함수
+#DB 연결
 def connect_db():
     return mysql.connector.connect(**DB_CONFIG)
 
 # DB 저장 함수
-def save_rmd(symbol, recommendation, report):
+def save_rmd(report):
+
+    if isinstance(report, str):
+        try:
+            data = json.loads(report)
+        except json.JSONDecodeError as e:
+            print("[ERR] JSON 파싱 실패:", e)
+            return
+    else:
+        data = report
+
     conn = connect_db()
     cursor = conn.cursor()
 
     query = """
-    INSERT INTO stock_recommendation (symbol, recommendation, report) VALUES (%s, %s, %s)
+        INSERT INTO stock_recommendation
+        (symbol, recommendation, score, report)
+        VALUES (%s, %s, %s, %s)
     """
-
-    cursor.execute(query, (symbol, recommendation, report))
+    cursor.execute(
+        query,
+        (
+            data["symbol"],
+            data["recommendation"],
+            data.get("score", 0),
+            data.get("report"),
+        ),
+    )
     conn.commit()
-
     cursor.close()
     conn.close()
     print(f" {symbol} Data Saved.")
+
+#Throttle
+_RATE_LOCK = threading.Lock()
+_LAST_CALL = 0.0          # epoch
+_MIN_GAP  = 1.0           # seconds  (0.5~2 사이 조정 가능)
+
+def throttle():
+    """모든 외부 API 호출 직전에 호출해 최소 간격을 보장한다."""
+    global _LAST_CALL
+    with _RATE_LOCK:
+        now = time.time()
+        wait = _MIN_GAP - (now - _LAST_CALL)
+        if wait > 0:
+            time.sleep(wait)
+        _LAST_CALL = time.time()
+
+# 공용 함수
+@lru_cache(maxsize=128)
+def get_price_df(ticker: str, period: str = "3mo", interval: str = "1d"):
+    """
+    Return historical OHLCV DataFrame for the given ticker using yfinance.
+
+    Args:
+        ticker (str): Stock symbol, e.g., "AAPL", "066970.KS".
+        period (str): Period string accepted by yfinance. Defaults to "3mo".
+        interval (str): Bar interval. Defaults to "1d".
+
+    Returns:
+        pandas.DataFrame: Historical price data indexed by date.
+    """
+    return with_retry(lambda t: yf.Ticker(t).history(period=period, interval=interval), ticker)
+
+def with_retry(fn, *args, retries=2, pause=1.5, **kwargs):
+    """429 전용 초경량 백오프 래퍼 (최대 1회 재시도)"""
+    for i in range(retries):
+        try:
+            throttle()              # 호출 간격 1 초 유지
+            return fn(*args, **kwargs)
+        except Exception as e:
+            if "Too Many Requests" in str(e) and i == 0:
+                time.sleep(pause)   # 1.5 초만 쉬고 한 번만 재시도
+                continue
+            raise
 
 #Tools
 @tool("Stock News")
@@ -57,37 +121,85 @@ def stock_news(ticker: str):
     Useful to get news about a stock.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    ticker = yf.Ticker(ticker)
-    return ticker.news
+    return with_retry(lambda t: yf.Ticker(t).news, ticker)
 
-scrape_tool = ScrapeWebsiteTool()
+@tool("Naver Stock News")
+def naver_stock_news(ticker: str):
+    """
+    Useful to get news about a Korean stock.
+    The input should be a ticker, for example 086520.KQ, 004560.KS.
+    """
+    clean_ticker = re.sub(r'\D', '', ticker)
+    return get_news_tables(clean_ticker)
+
+@tool("Institutional and Foregin Holdings")
+def institutional_foreign_holdings(ticker: str):
+    """
+    Useful to get the current institutional and foreign ownership percentages for a stock.
+    The input should be a Korean stock ticker, e.g., '005930' for Samsung Electronics.
+    """
+    clean_ticker = re.sub(r'\D', '', ticker)
+    return get_FF_tables(clean_ticker)
+
+#--------------------Technical Analyst--------------------
 
 @tool("Stock Price")
 def stock_price(ticker : str):
     """
-    Useful to get stock price data of 1 month.
+    Useful to get stock price data of 3 months.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    ticker = yf.Ticker(ticker)
-    return ticker.history(period="1mo")
+    return get_price_df(ticker)
 
-# @tool("RSI")
-# def RSI(ticker : str):
+@tool("RSI")
+def rsi(ticker: str, length: int = 14):
+    """
+    Useful to get RSI.
+    The input should be a ticker, for example AAPL, TSLA.
+    """
+    df = get_price_df(ticker)
+    df["RSI"] = ta.rsi(df["Close"], length=length)
+    return df[["RSI"]].dropna()
+
+@tool("MACD")
+def macd(ticker: str):
+    """
+    Useful to get MACD about a stock.
+    The input should be a ticker, for example AAPL, TSLA.
+    """
+    df = get_price_df(ticker)
+    macd_df = ta.macd(df["Close"], fast=12, slow=26, signal=9)
+    return macd_df.dropna()
+
+@tool("Bollinger")
+def bollinger(ticker: str):
+    """
+    Useful to get Bollinger data about a stock.
+    The input should be a ticker, for example AAPL, TSLA.
+    """
+    df = get_price_df(ticker)
+    bb_df = ta.bbands(df["Close"])
+    return bb_df.dropna()
+
+# @tool("Stock Price 1Year")
+# def stock_price_1Year(ticker: str):
 #     """
-#     Useful to get RSI chart data of 1 month.
+#     Useful to get stock price data of 1 Year.
 #     The input should be a ticker, for example AAPL, TSLA.
 #     """
-#     ticker = yf.Ticker(ticker)
-#     return None
-
-@tool("Stock Price 1Year")
-def stock_price_1Year(ticker: str):
-    """
-    Useful to get stock price data of 1 Year.
-    The input should be a ticker, for example AAPL, TSLA.
-    """
-    ticker = yf.Ticker(ticker)
-    return ticker.history(period="1y", interval="1wk")
+#     for attempt in range(retries):
+        # try:
+        #     return yf.Ticker(ticker).insider_transactions
+        # except Exception as e:
+        #     msg = str(e)
+        #     # yfinance 0.2/0.3 는 HTTP 오류를 그대로 문자열에 포함
+        #     if "Too Many Requests" in msg and attempt < retries - 1:
+        #         # 지수 back-off + 무작위 지터로 분산
+        #         sleep_for = pause * (2 ** attempt) + random.uniform(0, 1)
+        #         time.sleep(sleep_for)
+        #         continue
+        #     raise   # 다른 에러 또는 마지막 시도는 그대로 전파
+#     return ticker.history(period="1y", interval="1wk")
 
 @tool("Income Statement")
 def income_stmt(ticker : str):
@@ -95,8 +207,7 @@ def income_stmt(ticker : str):
     Useful to get the income statement of a company.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    ticker = yf.Ticker(ticker)
-    return ticker.income_stmt
+    return with_retry(lambda t: yf.Ticker(t).income_stmt, ticker)
 
 @tool("Balance Sheet")
 def balance_sheet(ticker: str):
@@ -104,8 +215,7 @@ def balance_sheet(ticker: str):
     Useful to get the balance sheet of a company.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    ticker = yf.Ticker(ticker)
-    return ticker.balance_sheet
+    return with_retry(lambda t: yf.Ticker(t).balance_sheet, ticker)
 
 @tool("Insider Transactions")
 def insider_transactions(ticker: str):
@@ -113,165 +223,155 @@ def insider_transactions(ticker: str):
     Useful to get insider transactions of a stock.
     The input should be a ticker, for example AAPL, TSLA.
     """
-    ticker = yf.Ticker(ticker)
-    return ticker.insider_transactions
+    return with_retry(lambda t: yf.Ticker(t).insider_transactions, ticker)
+
+# ---------------------------------------------------------------------------
+# JSON 스키마 (문자열 형태)
+# ---------------------------------------------------------------------------
+RESEARCH_SCHEMA = {
+    "symbol": "string",
+    "sentiment": {
+        "score": {"type": "float", "range": [-1.0, 1.0]},
+        "top_headlines": [
+            {
+                "title": "string",
+                "link": "string",
+                "sentiment": {"type": "string", "enum": ["pos", "neg", "neu"]}
+            }
+        ]
+    },
+    "ownership": {
+        "institutional": {
+            "current_pct": {"type": "float", "unit": "%"},
+            "delta_1d": {"type": "float", "unit": "pp"}
+        },
+        "foreign": {
+            "current_pct": {"type": "float", "unit": "%"},
+            "delta_1d": {"type": "float", "unit": "pp"}
+        }
+    }
+}
+TECH_SCHEMA = {
+    "symbol": "string",
+    "rsi": "float",
+    "macd": {"hist": "float", "signal": "float"},
+    "support_levels": ["float"],
+    "resistance_levels": ["float"],
+    "trend": "up|down|sideways"
+}
+FIN_SCHEMA = {
+    "symbol": "string",
+    "revenue_yoy": "float",
+    "eps_yoy": "float",
+    "roe": "float",
+    "debt_to_equity": "float",
+    "cash_flow": "float"
+}
+RECOMMEND_SCHEMA = {
+    "symbol": "string",
+    "recommendation": "BUY|SELL|HOLD",
+    "report": "string (kr)",
+    "score": "float (0~100)"
+}
+
+SCHEMA_STRINGS = {
+    "research": json.dumps(RESEARCH_SCHEMA, ensure_ascii=False),
+    "tech": json.dumps(TECH_SCHEMA, ensure_ascii=False),
+    "fin": json.dumps(FIN_SCHEMA, ensure_ascii=False),
+    "reco": json.dumps(RECOMMEND_SCHEMA, ensure_ascii=False),
+}
 
 #Stock Analysis
 researcher = Agent(
     role="Researcher",
-    goal="""
-    Gather and interpret vast amouts of data to provide a comprehensive
-    overview of the senitment and surrounding a stock.
-""",
-    backstory="""
-    You're skilled in gathering and interpreting data from various sources.
-    You read each data source carefully and extract the most important information.
-    Your insights are crucial for making infromed investment decisions.
-""",
-    tools=[
-        scrape_tool,
-        stock_news
-    ]
+    goal="다양한 소스의 최신 뉴스를 수집·분석하여 종목 심리를 평가한다.",
+    backstory="뉴스·SNS·웹사이트에서 정보를 수집하는 데이터 분석 전문가.",
+    tools=[naver_stock_news, stock_news, institutional_foreign_holdings],
 )
+
 technical_analyst = Agent(
     role="Technical Analyst",
-    goal="""
-    Analyze the movements of a stock and provide insights on trends, entry points, resistance and support levels.
-    """,
-    backstory="""
-    An expert in technical analysis, you're known for your ability to predict stock prices.
-    You provide valuable insights to your customers.
-""",
-    tools=[
-        stock_price,
-        # stock_price_6month,
-        stock_price_1Year,
-        # stock_price_5Year,
-    ]
+    goal="가격 움직임과 기술 지표를 분석해 추세·매수·매도 지점을 도출한다.",
+    backstory="차트 분석에 능통한 기술적 분석가.",
+    tools=[stock_price, rsi, macd, bollinger],
 )
+
 financial_analyst = Agent(
     role="Financial Analyst",
-    goal="""
-    Use financial statements, insider trading data and other metrics to evaluate a stock's
-    financial health and performance.
-""",
-    backstory="""
-    You're a very experienced invenstment advisor that looks at a company's financial health, market sentiment,
-    and qualitative data to make informed recommendations.
-""",
-    tools=[
-        income_stmt,
-        balance_sheet,
-        insider_transactions
-    ]
+    goal="재무제표·내부자 거래 등을 분석해 기업의 재무 건전성을 평가한다.",
+    backstory="기업 가치 평가 전문가.",
+    tools=[income_stmt, balance_sheet, insider_transactions],
 )
+
 hedge_fund_manager = Agent(
     role="Hedge Fund Manager",
-    goal="""
-    Manage a portfolio of stocks by carefully evaluating risk and reward.  
-    Make objective investment decisions based on a balanced view of market conditions.
-""",
-    backstory="""
-    당신은 리스크 관리를 중요하게 생각하는 헤지펀드 매니저입니다.
-    투자의 기회뿐만 아니라 위험 요소도 철저히 분석하여 신중한 결정을 내립니다.
-    투자 전략은 단기 수익뿐만 아니라 장기적인 안정성도 고려해야 합니다.
-    또한, 모든 분석과 투자 보고서는 **한국어로 작성해야 합니다.**
-""",
-    verbose=True,
-)
-decision_manager = Agent(
-    role="Decision Manager",
-    goal="주어진 주식에 대한 투자 결정을 내린다.",
-    backstory="10년 경력의 투자 전문가로, 시장 분석을 통해 신속한 투자 결정을 내린다.",
+    goal="시장·기술·재무 분석을 종합해 투자 결정을 내린다.",
+    backstory="리스크 관리 중심의 한국계 헤지펀드 매니저.",
     verbose=True,
 )
 
+# qa_auditor = Agent(
+#     role="QA Auditor",
+#     goal="모든 리포트가 JSON 스키마를 준수하는지 검증한다.",
+#     backstory="품질 보증 전문가.",
+# )
 
 #Task
 research = Task(
-    description="""
-    Gather and analyze the latest news and market sentiment surrounding 
-    {company}'s stock. Provide a summary of the news and any notable shifts in sentiment.
-""",
     agent=researcher,
-    expected_output="""
-    Your financial answer MUST be a detailed summary of the news and market
-    sentiment surrounding the stock.
-""",
+    description=(
+        "{company} 관련 정보를 수집하라."
+        " 한국 주식인 경우 `naver_stock_news`, `institutional_foreign_holdings` 툴을,"
+        " 해외 주식인 경우 `stock_news` 툴을 사용하라."
+        " JSON 스키마:\n" + SCHEMA_STRINGS["research"]
+    ),
+    expected_output=SCHEMA_STRINGS["research"],
 )
+
 technical_analysis = Task(
-    description="""
-    Conduct a technical analysis of the {company} stock price movements and identify
-    key support and resistance levels chart patterns.
-    Use ALL available tools to perform technical analysis and predict stock movements.
-""",
     agent=technical_analyst,
-    expected_output="""
-    Your final answer MUST be a report with potential entry points, price targets
-    and any other relevant information.
-""",
+    description=(
+        "{company} 주가 데이터를 분석하고 추세·지지·저항·기술 지표를 계산하여 보고서를 작성하라."
+        " JSON 스키마:\n" + SCHEMA_STRINGS["tech"]
+    ),
+    expected_output=SCHEMA_STRINGS["tech"],
 )
+
 financial_analysis = Task(
-    description="""
-    Analyze the {company}'s financial statements, balance sheet, insider trading data
-    and other metrics to evaluate {company}'s financial health and performance.
-""",
     agent=financial_analyst,
-    expected_output="""
-    Your final answer MUST be a report with an overview of {company}'s revenue,
-    earnings, cash flow, and other key financial metrics.
-""",
+    description=(
+        "{company} 재무제표·내부자 거래를 분석하여 재무 건전성 보고서를 작성하라."
+        " JSON 스키마:\n" + SCHEMA_STRINGS["fin"]
+    ),
+    expected_output=SCHEMA_STRINGS["fin"],
 )
+
 investment_recommendation = Task(
-    description="""
-    Based on the research, technical analysis, and financial analysis reports, provide
-    a detailed investment recommendation for {company} stock.
-""",
     agent=hedge_fund_manager,
-    expected_output="""
-    최종 투자 추천은 **매수(BUY), 매도(SELL), 보유(HOLD)** 중 하나여야 합니다.
-    선택한 추천에 대한 명확한 근거를 제시하세요.  
-    재무 분석, 기술적 분석, 시장 뉴스 및 투자 심리를 고려하여 상세한 분석을 포함해야 합니다.
-""",
-    context=[
-        research,
-        technical_analysis,
-        financial_analysis,
-    ],
-    # output_file="{company} investment.md"
+    context=[research, technical_analysis, financial_analysis],
+    description=(
+        "위 세 보고서를 종합하여 {company} 종목에 대한 투자 의견을 매수·매도·보유 중 하나로 결정하라."
+        " JSON 스키마:\n" + SCHEMA_STRINGS["reco"] +
+        "\n모든 설명은 한국어로 작성한다."
+    ),
+    expected_output=SCHEMA_STRINGS["reco"],
 )
-recommandation_decision = Task(
-    agent=decision_manager,
-    description="""
-    Based on the research, technical analysis, and financial analysis reports, provide
-    an investment recommendation for {company} stock.
-    
-    Your response should only be one of the following: BUY, SELL, HOLD.
-    Do not add any explanations or additional text.
-""",
-    expected_output="BUY, SELL, or HOLD (one word only)",
-    context=[
-        investment_recommendation,
-    ],
-    # output_file="{company} decision.md"
-)
+
+# qa_task = Task(
+#     agent=qa_auditor,
+#     context=[research, technical_analysis, financial_analysis, investment_recommendation],
+#     description=(
+#         "모든 출력이 지정된 JSON 스키마를 정확히 따르는지 검사하여 PASS 또는 FAIL 을 반환한다."
+#         " 실패 시 어떤 필드가 누락/오류인지 명시한다."
+#     ),
+#     expected_output="PASS 또는 FAIL",
+#)
+
 
 #Crewai
 crew = Crew(
-    tasks=[
-        research,
-        technical_analysis,
-        financial_analysis,
-        investment_recommendation,
-        recommandation_decision,
-    ],
-    agents=[
-        researcher,
-        technical_analyst,
-        financial_analyst,
-        hedge_fund_manager,
-        decision_manager,
-    ],
+    agents=[researcher, technical_analyst, financial_analyst, hedge_fund_manager],
+    tasks=[research, technical_analysis, financial_analysis, investment_recommendation],
     verbose=True,
 )
 
@@ -283,6 +383,6 @@ result = crew.kickoff(inputs = inputs)
 
 #DataBase Save
 investment_report = investment_recommendation.output.raw
-recommendation_decision = recommandation_decision.output.raw
+# print(type(investment_recommendation), investment_recommendation)
 
-save_rmd(inputs["company"], recommendation_decision, investment_report)
+save_rmd(investment_report)

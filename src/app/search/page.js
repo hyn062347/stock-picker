@@ -93,6 +93,7 @@ function SearchResults() {
       key: index,
       date: rec.created_at,
       recommendation: rec.recommendation,
+      score: rec.score,
       report: rec.report,
       className: rec.recommendation === "BUY" ? styles.buy :
         rec.recommendation === "HOLD" ? styles.hold :
@@ -149,7 +150,7 @@ function SearchResults() {
       });
       const result = await response.json();
       if (result.error) throw new Error(result.error);
-      alert("Try.py 실행 요청 완료!");
+      alert(`${stockData.companyName} 데이터 요청 완료. 3분 소요.`);
     } catch (error) {
       alert("실행 오류: " + error.message);
     }
@@ -236,6 +237,7 @@ function SearchResults() {
             <div key={rec.key} className={styles.recommendation}>
               <div className={styles.recTitle}>
                 <p className={rec.className}>{rec.date} {rec.recommendation}</p>
+                <p className={rec.className} style={{ display: 'flex', maxWidth: '50px', flexDirection: 'column', alignItems: 'center'}}>{rec.score}</p>
                 <button className={styles.viewButton} onClick={() => toggleReport(rec.key)}>
                   {openReports[rec.key] ? "Hide" : "Open"}
                 </button>

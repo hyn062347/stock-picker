@@ -1,5 +1,3 @@
-import { exec } from "child_process"
-
 export async function POST(req) {
     try {
         const { symbol } = await req.json();
@@ -7,16 +5,15 @@ export async function POST(req) {
             return Response.json({ error: "symbol이 제공되지 않았습니다." }, { status: 400 });
         }
 
-        console.log("Try.py 실행 요청:", symbol);
-        exec(`python3 server/Try.py "${symbol}"`, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Try.py 실행 오류: ${stderr}`);
-            } else {
-                console.log(`Try.py 실행 결과: ${stdout}`);
-            }
+        const recUrl = new URL("/api/rec_generate", req.url);
+        const response = await fetch(recUrl.toString(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbol }),
         });
 
-        return Response.json({ message: "Try.py 실행 요청 완료!" });
+        const payload = await response.json();
+        return Response.json(payload, { status: response.status });
     } catch (error) {
         console.error("서버 오류:", error);
         return Response.json({ error: "서버 오류 발생" }, { status: 500 });
