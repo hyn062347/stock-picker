@@ -2,8 +2,8 @@ import { config as loadEnv } from "dotenv";
 import mysql from "mysql2/promise";
 import OpenAI from "openai";
 import yahooFinance from "yahoo-finance2";
-import { fetchForeignHoldingsTable, type ForeignHoldingRow } from "./NaverFF";
-import { fetchNaverNewsArticles, type NaverArticle } from "./NaverNews";
+import { fetchForeignHoldingsTable, type ForeignHoldingRow } from "../n_finance/route";
+import { fetchNaverNewsArticles, type NaverArticle } from "../n_news/route";
 
 loadEnv();
 
@@ -567,9 +567,6 @@ function extractResponseText(response: any): string {
           if (block?.type === "output_text" && typeof block?.text === "string") {
             return block.text;
           }
-          if (block?.type === "text" && typeof block?.text === "string") {
-            return block.text;
-          }
         }
       }
     }
@@ -595,7 +592,7 @@ async function runStructuredAgent(options: AgentTaskOptions) {
         role: "system",
         content: [
           {
-            type: "text",
+            type: "input_text",
             text: systemPrompt,
           },
         ],
@@ -604,7 +601,7 @@ async function runStructuredAgent(options: AgentTaskOptions) {
         role: "user",
         content: [
           {
-            type: "text",
+            type: "input_text",
             text: [
               `회사 식별자: ${company}`,
               "아래는 참고용 데이터(JSON)입니다.",
@@ -614,9 +611,9 @@ async function runStructuredAgent(options: AgentTaskOptions) {
         ],
       },
     ],
-    response_format: {
-      type: "json_schema",
-      json_schema: {
+    text: {
+      format: {
+        type: "json_schema",
         name: schema.name,
         schema: schema.schema,
         strict: true,
@@ -682,7 +679,7 @@ function isKoreanSymbol(symbol: string) {
   return /\d{6}/.test(symbol) || /\.K[QS]$/i.test(symbol);
 }
 
-async function runAnalysis(symbol: string) {
+export async function runAnalysis(symbol: string) {
   const korean = isKoreanSymbol(symbol);
 
   const [researchContext, technicalContext, financialContext] = await Promise.all([
@@ -739,7 +736,7 @@ async function runAnalysis(symbol: string) {
 async function main() {
   const symbol = process.argv[2];
   if (!symbol) {
-    console.error("No symbol provided. Usage: pnpm ts-node server/Try.ts <SYMBOL>");
+    console.error("No symbol provided. Usage: pnpm ts-node src/app/api/rec_generate/rec_generate.ts <SYMBOL>");
     process.exit(1);
   }
 
@@ -753,6 +750,21 @@ async function main() {
   }
 }
 
-if (require.main === module) {
+if (typeof require !== "undefined" && typeof module !== "undefined" && require.main === module) {
   main();
+}
+
+export async function POST(req: Request) {
+  try {
+    const { symbol } = await req.json();
+    if (!symbol || typeof symbol !== "string") {
+      return Response.json({ error: "symbol이 제공되지 않았습니다." }, { status: 400 });
+    }
+
+    const result = await runAnalysis(symbol);
+    return Response.json({ message: "추천 데이터 생성 완료", data: result.recommendation });
+  } catch (error) {
+    console.error("[rec_generate] Failed to generate recommendation:", error);
+    return Response.json({ error: "추천 데이터 생성 중 오류가 발생했습니다." }, { status: 500 });
+  }
 }

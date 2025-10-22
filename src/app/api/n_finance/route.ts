@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { httpRequest } from "./httpClient";
+import { httpRequest } from "../_lib/httpClient";
 
 const DEFAULT_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
